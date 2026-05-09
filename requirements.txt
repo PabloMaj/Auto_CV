@@ -1,0 +1,10 @@
+
+langgraph
+langchain
+langchain-community
+pydantic
+numpy
+opencv-python
+pytest
+pillow
+matplotlib
