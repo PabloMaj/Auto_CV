@@ -1,10 +1,15 @@
 
 langgraph
 langchain
-langchain-community
 pydantic
-numpy
+ollama
 opencv-python
+numpy
+torch
+torchvision
+ultralytics
 pytest
-pillow
 matplotlib
+pillow
+scikit-learn
+segmentation-models-pytorch

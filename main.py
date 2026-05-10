@@ -1,15 +1,18 @@
 
-from src.graph import build_graph
-from src.state import initial_state
+from src.graph.workflow import build_graph
+from src.state.agent_state import AgentState
+from src.config.settings import SystemSettings
 
 if __name__ == "__main__":
-    graph = build_graph()
+    settings = SystemSettings()
 
-    result = graph.invoke(initial_state())
+    initial_state = AgentState(
+        user_prompt="Opracuj metodę do zliczania roślin na obrazach RGB",
+        dataset_path="./dataset"
+    )
 
-    print("\n=== FINAL METRICS ===")
-    print(result["metrics"])
+    graph = build_graph(settings)
+    result = graph.invoke(initial_state.model_dump())
 
-    print("\n=== LOGS ===")
-    for log in result["logs"]:
-        print(log)
+    print("\n=== FINAL RESULT ===")
+    print(result)

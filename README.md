@@ -1,57 +1,24 @@
 
-# Autonomous CV Agent System
+# LangGraph CV Agent System
 
-Production-oriented prototype for autonomous Computer Vision prototyping using:
+Prototypowy system agentowy do iteracyjnego rozwijania rozwiązań Computer Vision.
 
-- LangGraph
-- Ollama
-- Coding LLM
-- Vision/Reasoning MLLM
-- Deterministic evaluation
-- Iterative improvement loop
-- Experiment tracking
-- Sandbox runner
-- Failure analysis
+## Główne założenia
+- LangGraph jako orchestrator workflow
+- Agenci deterministyczni + LLM-based
+- Iteracyjne ulepszanie rozwiązań
+- Możliwość wyłączania wybranych agentów
+- Wsparcie dla klasycznych metod CV oraz DL
+- Testy jednostkowe
 
-## Features
-
-- Dataset understanding
-- Annotation discovery
-- Automatic evaluator generation
-- Predictor generation
-- Runner validation
-- Iterative improvement
-- Failure-driven optimization
-- Structured logging
-- Experiment memory
-- LangSmith-ready hooks
-
-## Recommended Ollama models
-
-### Coding
-```bash
-ollama pull qwen2.5-coder:7b
-```
-
-### Vision / Reasoning
-```bash
-ollama pull qwen2.5vl:7b
-```
-
-## Install
+## Instalacja
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run
+## Uruchomienie
 
 ```bash
 python main.py
-```
-
-## Tests
-
-```bash
-pytest
 ```

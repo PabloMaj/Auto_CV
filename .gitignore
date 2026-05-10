@@ -1,5 +1,4 @@
-data/
-resources_ds/
+data
+resources_ds
+workspace
 __pycache__
-__pycache__
-__init__.py

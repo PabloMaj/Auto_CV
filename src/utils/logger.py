@@ -1,7 +1,12 @@
 
-from datetime import datetime
+import logging
 
-def log_step(state, message):
-    timestamp = datetime.now().isoformat()
-    state["logs"].append(f"[{timestamp}] {message}")
-    return state
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+
+def get_logger(name: str):
+    return logging.getLogger(name)
