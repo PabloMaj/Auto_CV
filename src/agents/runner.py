@@ -128,8 +128,5 @@ class RunnerAgent:
                 traceback.format_exc()
             )
 
-        print(state)
-        import sys
-        sys.exit(0)
 
         return state
