@@ -1,6 +1,6 @@
 
 from src.utils.logger import get_logger
-from src.utils.ollama_client import OllamaInference
+from src.inference.ollama_inference import OllamaInference
 
 logger = get_logger(__name__)
 
