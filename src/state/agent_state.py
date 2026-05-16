@@ -12,8 +12,9 @@ class AgentState(BaseModel):
     test_samples: int = 0
     unlabeled_samples: int = 0
 
-    detected_task_type: Optional[str] = None
-    proposed_dl_model: Optional[str] = None
+    task_type_for_dataset: Optional[str] = None
+    enrichement_for_dataset_needed: Optional[bool] = None
+    desired_output: Optional[str] = None
 
     generated_code: Optional[str] = None
     execution_output: Optional[str] = None

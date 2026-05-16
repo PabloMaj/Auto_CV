@@ -1,18 +1,35 @@
-
 from src.utils.logger import get_logger
+from src.agents.funcs.data_analyser import determine_desired_output
+from src.inference.ollama_inference import OllamaInference
 
 logger = get_logger(__name__)
 
 
 class DataAnalyserAgent:
 
+    def __init__(self, inference=OllamaInference(model="qwen2.5vl:7b")):
+        self.inference = inference
+
     def run(self, state):
+
         logger.info("Running DataAnalyserAgent")
 
-        # TODO: inspect annotations
-        # TODO: determine task type
+        # decision about task type for dataset
+        state["task_type_for_dataset"] = "object_detection"
 
-        state["detected_task_type"] = "instance_segmentation"
-        state["proposed_dl_model"] = "Mask R-CNN"
+        # decision about whether dataset enrichment is needed
+        if state["task_type_for_dataset"] in ["object_detection", "semantic_segmentation"]:
+            state["enrichement_for_dataset_needed"] = True
+        else:
+            state["enrichement_for_dataset_needed"] = False
+
+        # allowed output forms for CV tasks
+        output_forms_allowed = ["scalar", "points", "line_segments", "bounding_boxes", "polygons", "segmentation_masks"]
+
+        # extract user prompt from state
+        user_prompt = state["user_prompt"]
+
+        # decision about desired output format for CV task
+        state["desired_output"] = determine_desired_output(self.inference, user_prompt, output_forms_allowed)
 
         return state

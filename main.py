@@ -7,9 +7,8 @@ if __name__ == "__main__":
     settings = SystemSettings()
 
     initial_state = AgentState(
-        user_prompt = "Develop a computer vison method to count all plants in given RGB images. Use only classical CV methods, no deep learning." \
+        user_prompt="Develop a computer vison method to count all plants in given RGB images. Use only classical CV methods, no deep learning." \
         "You can use ExG index for plant segmentation. For counting, consider using connected components analysis or contour detection.",
-        
         dataset_path="./dataset"
     )
 
