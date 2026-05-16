@@ -1,6 +1,5 @@
-
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AgentState(BaseModel):
@@ -23,16 +22,16 @@ class AgentState(BaseModel):
     evaluation_metric: Optional[float] = None
     evaluation_summary: Optional[str] = None
 
-    prediction_visualizations: List[str] = []
+    prediction_visualizations: List[str] = Field(default_factory=list)
 
-    improvement_suggestions: List[str] = []
-    previous_solution_descriptions: List[str] = []
+    improvement_suggestions: List[str] = Field(default_factory=list)
+    previous_solution_descriptions: List[str] = Field(default_factory=list)
 
     current_solution_iteration: int = 0
     current_improvement_step: int = 0
 
     previous_best_metric: float = -1.0
 
-    logs: List[str] = []
+    logs: List[str] = Field(default_factory=list)
 
-    metadata: Dict[str, Any] = {}
+    metadata: Dict[str, Any] = Field(default_factory=dict)
