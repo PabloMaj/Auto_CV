@@ -56,7 +56,6 @@ def build_desired_output_definition(desired_output: str) -> str:
         return ""
 
     return f"""
-Desired output specification:
 - Name: {definition.name}
 - Description: {definition.description}
 - Structure: {definition.structure}
