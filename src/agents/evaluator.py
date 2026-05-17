@@ -1,5 +1,7 @@
+# src/agents/evaluator.py
 
 from src.utils.logger import get_logger
+from src.agents.funcs.evaluator import evaluate_bounding_boxes, placeholder_evaluation
 
 logger = get_logger(__name__)
 
@@ -9,18 +11,15 @@ class EvaluatorAgent:
     def run(self, state):
         logger.info("Running EvaluatorAgent")
 
-        # TODO:
-        # - inference on validation set
-        # - calculate metrics
-        # - visualize TP/FP/FN
+        desired_output = state.get("desired_output", "unknown")
 
-        state["evaluation_metric"] = 0.75
-        state["evaluation_summary"] = "Prototype metric"
+        if desired_output == "bounding_boxes":
+            state = evaluate_bounding_boxes(state)
+        else:
+            state = placeholder_evaluation(state, desired_output)
 
-        state["prediction_visualizations"] = [
-            "outputs/tp_example.png",
-            "outputs/fp_example.png",
-            "outputs/fn_example.png"
-        ]
+        logger.info("EvaluatorAgent finished successfully")
+        import sys
+        sys.exit(0)
 
         return state

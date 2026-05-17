@@ -16,6 +16,10 @@ GENERAL REQUIREMENTS:
 
 IMPLEMENTATION REQUIREMENTS:
 - Main implementation must be inside class Predictor.
+- desired form of the prediction:
+    predictor = Predictor()
+    results = predictor.predict(img_path), where img_path is the path to a single image file.
+- default parameters for predict method should be set to allow direct usage without additional tuning.
 - Additional helper classes and functions are allowed.
 - Saveable as generated_solution.py.
 - Must contain:
