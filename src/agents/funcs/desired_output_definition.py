@@ -22,8 +22,8 @@ class DesiredOutputRegistry:
             example="0.873"
         ),
 
-        "object_detection": DesiredOutputDefinition(
-            name="object_detection",
+        "bounding_boxes": DesiredOutputDefinition(
+            name="bounding_boxes",
             description="List of bounding boxes with class labels and confidence.",
             structure=(
                 "List[Dict] where each Dict contains: "

@@ -1,5 +1,5 @@
 from src.utils.logger import get_logger
-from src.agents.funcs.data_analyser import determine_desired_output
+from src.agents.funcs.data_analyser import determine_desired_output, build_desired_output_definition
 from src.inference.ollama_inference import OllamaInference
 
 logger = get_logger(__name__)
@@ -31,5 +31,6 @@ class DataAnalyserAgent:
 
         # decision about desired output format for CV task
         state["desired_output"] = determine_desired_output(self.inference, user_prompt, output_forms_allowed)
+        state["desired_output_definition"] = build_desired_output_definition(state["desired_output"])
 
         return state

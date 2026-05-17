@@ -7,8 +7,9 @@ if __name__ == "__main__":
     settings = SystemSettings()
 
     initial_state = AgentState(
-        user_prompt="Develop a computer vison method to count all plants in given RGB images. Use only classical CV methods, no deep learning." \
-        "You can use ExG index for plant segmentation. For counting, consider using connected components analysis or contour detection.",
+        user_prompt="Develop a computer vison method to detect all plants in given RGB images. Use only classical CV methods, no deep learning."
+        "You can use ExG index for plant segmentation. For counting, consider using connected components analysis or contour detection."
+        "Return the results in the form of bounding boxes around each detected plant.",
         dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1"
     )
 
