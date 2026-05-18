@@ -1,49 +1,36 @@
-
 from src.utils.logger import get_logger
-from src.inference.ollama_inference import OllamaInference
+
+from src.inference.factory import InferenceFactory
+from src.prompts.improvement_suggester_prompt import SYSTEM_PROMPT, build_user_prompt
+from src.agents.funcs.improvement_suggester_functions import parse_improvement_response
 
 logger = get_logger(__name__)
 
 
 class ImprovementSuggesterAgent:
 
-    def __init__(self, model_name: str):
-        self.llm = OllamaInference(model_name)
-
-    def build_prompt(self, state):
-
-        prompt = f'''
-        Analyze current CV solution.
-
-        Current metric:
-        {state.get("evaluation_metric")}
-
-        Current code:
-        {state.get("generated_code")}
-
-        Prediction visualizations:
-        {state.get("prediction_visualizations")}
-
-        Previous suggestions:
-        {state.get("improvement_suggestions")}
-        '''
-
-        return prompt
+    def __init__(self, inference_backend: str, inference_kwargs: dict):
+        self.llm = InferenceFactory.create(backend=inference_backend, **inference_kwargs)
 
     def run(self, state):
+
         logger.info("Running ImprovementSuggesterAgent")
 
-        prompt = self.build_prompt(state)
+        user_prompt = state.get("user_prompt", "")
+        generated_code = state.get("generated_code", "")
+        vis_paths = state.get("evaluation_visualizations", [])
+        vis_paths = vis_paths[:2]  # max 2 images for prompt to avoid hitting token limits
 
-        messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        prompt = build_user_prompt(user_prompt=user_prompt, generated_code=generated_code)
+        messages = self.llm.build_messages(prompt=prompt, image_paths=vis_paths, system_prompt=SYSTEM_PROMPT)
+        response = self.llm.infer(messages=messages)
 
-        suggestions = self.llm.infer(messages)
+        logger.info("Improvement analysis completed")
 
-        state["improvement_suggestions"].append(suggestions)
+        parsed = parse_improvement_response(response)
+
+        state["verified_problems"] = parsed["verified_problems"]
+        state["improvement_suggestions"] = parsed["improvement_suggestions"]
+        state["improvement_raw_response"] = response
 
         return state
