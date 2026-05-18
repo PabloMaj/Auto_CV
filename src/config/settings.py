@@ -37,9 +37,9 @@ class SystemSettings(BaseModel):
     # LIMITS / CONTROL
     # ======================================================
 
-    max_runner_retries: int = 5
-    max_improvement_steps: int = 5
-    max_novel_solutions: int = 5
+    max_runner_retries: int = 2
+    max_improvement_steps: int = 2
+    max_novel_solutions: int = 3
 
     # ======================================================
     # INITIAL STATE CONTRACT (IMPORTANT)

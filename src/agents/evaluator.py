@@ -20,4 +20,6 @@ class EvaluatorAgent:
 
         logger.info("EvaluatorAgent finished successfully")
 
+        print(f"Evaluation results: {state.get('evaluation', {})}")
+
         return state

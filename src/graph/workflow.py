@@ -50,8 +50,8 @@ def update_after_improvement(state, settings: SystemSettings):
 
     step_id = state.get("step_id", 1) + 1
     stage_id = state.get("stage_id", 1)
-    global_count = state.get("global_improvement_count", 0) + 1
 
+    print(f"Updating state after improvement: step_id={step_id}, stage_id={stage_id}")
     if step_id > settings.max_improvement_steps:
         stage_id += 1
         step_id = 1
@@ -60,7 +60,6 @@ def update_after_improvement(state, settings: SystemSettings):
         **state,
         "step_id": step_id,
         "stage_id": stage_id,
-        "global_improvement_count": global_count,
     }
 
 
@@ -188,7 +187,7 @@ def build_graph(settings: SystemSettings):
 
     def route_after_improvement(state):
 
-        if state.get("global_improvement_count", 0) >= settings.max_novel_solutions:
+        if state.get("stage_id", 0) > settings.max_novel_solutions:
             return END
 
         return "programmer"
