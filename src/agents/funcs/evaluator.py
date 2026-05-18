@@ -43,7 +43,6 @@ def evaluate_bounding_boxes(state):
 
         try:
             pred_boxes = predictor.predict(str(img_path))
-            print(pred_boxes)
         except Exception:
             logger.error(f"Prediction failed:\n{traceback.format_exc()}")
             continue

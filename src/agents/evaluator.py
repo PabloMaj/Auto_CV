@@ -19,7 +19,5 @@ class EvaluatorAgent:
             state = placeholder_evaluation(state, desired_output)
 
         logger.info("EvaluatorAgent finished successfully")
-        import sys
-        sys.exit(0)
 
         return state
