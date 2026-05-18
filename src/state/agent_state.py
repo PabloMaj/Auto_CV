@@ -15,8 +15,8 @@ class AgentState(BaseModel):
     enrichement_for_dataset_needed: Optional[bool] = None
     desired_output: Optional[str] = None
 
-    stage_id: Optional[int] = 0
-    step_id: Optional[int] = 0
+    stage_id: Optional[int] = 1
+    step_id: Optional[int] = 1
     generated_code: Optional[str] = None
 
     execution_success: Optional[bool] = None

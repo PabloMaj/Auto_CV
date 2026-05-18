@@ -7,17 +7,6 @@ import re
 from typing import List
 
 
-def set_stage_and_step_ids(state, reasoning_type):
-    if reasoning_type == "initial_coding":
-        state["stage_id"] = 1
-        state["step_id"] = 1
-    elif reasoning_type == "improvement":
-        state["step_id"] += 1
-    elif reasoning_type == "novelty_coding":
-        state["stage_id"] += 1
-        state["step_id"] = 1
-
-
 def select_images_for_prompt(state, n_to_vis=4) -> List[str]:
     train_images = state.get("path_to_train_images", [])
 

@@ -13,16 +13,72 @@ from src.agents.improvement_suggester import ImprovementSuggesterAgent
 from src.config.settings import SystemSettings
 
 
+# ==========================================================
+# STATE LOGIC
+# ==========================================================
+
+def resolve_reasoning_type(state, settings: SystemSettings):
+
+    stage_id = state.get("stage_id", 1)
+    step_id = state.get("step_id", 1)
+
+    # BUG FIXING (highest priority)
+    if state.get("execution_success") is False:
+        if state.get("retry_count", 0) < settings.max_runner_retries:
+            return "bug_fixing"
+
+    # INITIAL
+    if stage_id == 1 and step_id == 1:
+        return "initial_coding"
+
+    # NOVELTY
+    if stage_id >= 2 and step_id == 1:
+        return "novelty_coding"
+
+    # IMPROVEMENT
+    if step_id > 1:
+        return "improving_based_on_suggestion"
+
+    return "initial_coding"
+
+
+# ==========================================================
+# STATE UPDATE (ONLY PLACE THAT MUTATES EVOLUTION STATE)
+# ==========================================================
+
+def update_after_improvement(state, settings: SystemSettings):
+
+    step_id = state.get("step_id", 1) + 1
+    stage_id = state.get("stage_id", 1)
+    global_count = state.get("global_improvement_count", 0) + 1
+
+    if step_id > settings.max_improvement_steps:
+        stage_id += 1
+        step_id = 1
+
+    return {
+        **state,
+        "step_id": step_id,
+        "stage_id": stage_id,
+        "global_improvement_count": global_count,
+    }
+
+
+# ==========================================================
+# GRAPH
+# ==========================================================
+
 def build_graph(settings: SystemSettings):
 
     graph = StateGraph(dict)
 
     # ======================================================
-    # BASE AGENTS
+    # AGENTS
     # ======================================================
 
     preprocessor = DataPreprocessorAgent()
     analyser = DataAnalyserAgent()
+
     enricher = DatasetEnricherAgent()
     trainer = DLModelTrainerAgent()
 
@@ -38,11 +94,15 @@ def build_graph(settings: SystemSettings):
     evaluator = EvaluatorAgent()
 
     suggester = ImprovementSuggesterAgent(
-        settings.improvement_llm.model
+        settings.improvement_llm.backend,
+        {
+            "model": settings.improvement_llm.model,
+            **settings.improvement_llm.inference_kwargs
+        }
     )
 
     # ======================================================
-    # NODES
+    # PIPELINE (ONE TIME ONLY)
     # ======================================================
 
     graph.add_node("data_preprocessor", preprocessor.run)
@@ -54,26 +114,35 @@ def build_graph(settings: SystemSettings):
     if settings.enable_dl_model_trainer:
         graph.add_node("dl_model_trainer", trainer.run)
 
-    graph.add_node(
-        "programmer",
-        lambda s: programmer.run(s, "initial_coding")
-    )
+    # ======================================================
+    # PROGRAMMER NODE
+    # ======================================================
 
-    graph.add_node(
-        "programmer_bugfix",
-        lambda s: programmer.run(s, "bugfix")
-    )
+    def programmer_node(state):
+        reasoning_type = resolve_reasoning_type(state, settings)
+        state["reasoning_type"] = reasoning_type
+        return programmer.run(state, reasoning_type)
+
+    graph.add_node("programmer", programmer_node)
+
+    # ======================================================
+    # EXECUTION NODES
+    # ======================================================
 
     graph.add_node("runner", runner.run)
     graph.add_node("evaluator", evaluator.run)
     graph.add_node("improvement_suggester", suggester.run)
+
+    def improvement_state_updater(state):
+        return update_after_improvement(state, settings)
+
+    graph.add_node("improvement_state_updater", improvement_state_updater)
 
     # ======================================================
     # ENTRY PIPELINE
     # ======================================================
 
     graph.set_entry_point("data_preprocessor")
-
     graph.add_edge("data_preprocessor", "data_analyser")
 
     if settings.enable_dataset_enricher:
@@ -88,71 +157,47 @@ def build_graph(settings: SystemSettings):
         graph.add_edge("data_analyser", "programmer")
 
     # ======================================================
-    # EXECUTION LOOP
+    # MAIN LOOP
     # ======================================================
 
     graph.add_edge("programmer", "runner")
-    graph.add_edge("programmer_bugfix", "runner")
 
     # ======================================================
-    # ROUTING AFTER RUNNER (CRITICAL)
+    # RUNNER ROUTING
     # ======================================================
 
     def route_after_runner(state):
 
-        success = state.get("execution_success", False)
-        retries = state.get("retry_count", 0)
-        max_retries = settings.max_runner_retries
+        if state.get("execution_success") is False:
+            return "programmer"
 
-        # ❌ runtime error → bugfix loop
-        if not success and retries < max_retries:
-            state["retry_count"] = retries + 1
-            return "programmer_bugfix"
-
-        # ❌ too many retries → stop
-        if not success:
-            return END
-
-        # ✔ success → evaluation
         return "evaluator"
 
     graph.add_conditional_edges(
         "runner",
         route_after_runner,
         {
-            "programmer_bugfix": "programmer_bugfix",
+            "programmer": "programmer",
             "evaluator": "evaluator",
-            END: END
         }
     )
 
     # ======================================================
-    # QUALITY LOOP
+    # IMPROVEMENT LOOP (FIXED + CLEAN + BOUNDED)
     # ======================================================
-
-    graph.add_edge("evaluator", "improvement_suggester")
 
     def route_after_improvement(state):
 
-        score = state.get("solution_score", 0.0)
-
-        improvement_count = state.get("improvement_count", 0)
-
-        max_iters = settings.m_improvement_steps
-
-        # ✔ good enough → end
-        if score >= 0.85:
+        if state.get("global_improvement_count", 0) >= settings.max_novel_solutions:
             return END
 
-        # ❌ improve again → back to programmer
-        if improvement_count < max_iters:
-            state["improvement_count"] = improvement_count + 1
-            return "programmer"
+        return "programmer"
 
-        return END
+    graph.add_edge("evaluator", "improvement_suggester")
+    graph.add_edge("improvement_suggester", "improvement_state_updater")
 
     graph.add_conditional_edges(
-        "improvement_suggester",
+        "improvement_state_updater",
         route_after_improvement,
         {
             "programmer": "programmer",

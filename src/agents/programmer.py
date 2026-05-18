@@ -2,7 +2,7 @@
 
 from typing import Dict, List
 
-from src.agents.funcs.programmer import extract_source_code, select_images_for_prompt, set_stage_and_step_ids
+from src.agents.funcs.programmer import extract_source_code, select_images_for_prompt
 
 from src.agents.funcs.programmer_prompt_builder import ProgrammerPromptBuilder
 from src.inference.factory import InferenceFactory
@@ -30,13 +30,11 @@ class ProgrammerAgent:
         return ProgrammerPromptBuilder.build(state=state, reasoning_type=reasoning_type, code_start_token=self.CODE_START_TOKEN,
                                              code_end_token=self.CODE_END_TOKEN)
 
-    def set_stage_and_step_ids(self, state, reasoning_type):
-        return set_stage_and_step_ids(state, reasoning_type)
-
     def run(self, state, reasoning_type="initial_coding"):
 
+        print(f"Current stage_id and step_id: {state.get('stage_id', 0)}, {state.get('step_id', 0)}")
+
         logger.info(f"Running ProgrammerAgent ({reasoning_type})")
-        self.set_stage_and_step_ids(state=state, reasoning_type=reasoning_type)
         prompt = self.build_prompt(state=state, reasoning_type=reasoning_type)
         messages = self.llm.build_messages(prompt=prompt, image_paths=None)
         raw_output = self.llm.infer(messages=messages)
