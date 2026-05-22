@@ -1,14 +1,14 @@
 from langgraph.graph import StateGraph, END
 
-from src.agents.data_preprocessor import DataPreprocessorAgent
-from src.agents.data_analyser import DataAnalyserAgent
-from src.agents.dataset_enricher import DatasetEnricherAgent
-from src.agents.dl_model_trainer import DLModelTrainerAgent
+from src.agents.data_preprocessor_agent import DataPreprocessorAgent
+from src.agents.data_analyser_agent import DataAnalyserAgent
+from src.agents.dataset_enricher_agent import DatasetEnricherAgent
+from src.agents.dl_model_trainer_agent import DLModelTrainerAgent
 
-from src.agents.programmer import ProgrammerAgent
-from src.agents.runner import RunnerAgent
-from src.agents.evaluator import EvaluatorAgent
-from src.agents.improvement_suggester import ImprovementSuggesterAgent
+from src.agents.programmer_agent import ProgrammerAgent
+from src.agents.runner_agent import RunnerAgent
+from src.agents.evaluator_agent import EvaluatorAgent
+from src.agents.improvement_suggester_agent import ImprovementSuggesterAgent
 
 from src.config.settings import SystemSettings
 

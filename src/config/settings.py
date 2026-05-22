@@ -37,8 +37,8 @@ class SystemSettings(BaseModel):
     # LIMITS / CONTROL
     # ======================================================
 
-    max_runner_retries: int = 2
-    max_improvement_steps: int = 2
+    max_runner_retries: int = 5
+    max_improvement_steps: int = 5
     max_novel_solutions: int = 3
 
     # ======================================================
@@ -81,7 +81,7 @@ class SystemSettings(BaseModel):
 
     programmer_llm: LLMSettings = LLMSettings(
         backend="sonnet",
-        model="claude-haiku-4-5",
+        model="claude-sonnet-4-5",
         inference_kwargs={
             "temperature": 0.1,
             "max_tokens": 8192,
@@ -95,7 +95,7 @@ class SystemSettings(BaseModel):
 
     improvement_llm: LLMSettings = LLMSettings(
         backend="sonnet",
-        model="claude-haiku-4-5",
+        model="claude-sonnet-4-5",
         inference_kwargs={
             "temperature": 0.2,
             "max_tokens": 4096,

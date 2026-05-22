@@ -7,10 +7,8 @@ if __name__ == "__main__":
     settings = SystemSettings()
 
     initial_state = AgentState(
-        user_prompt="Develop a computer vison method to detect all plants in given RGB images. Use only classical CV methods, no deep learning."
-        "You can use ExG index for plant segmentation with Otsu's thresholding. For counting, consider using connected components analysis or contour detection."
-        "Return the results in the form of bounding boxes around each detected plant.",
-        dataset_path="data/data_structured/crop_line_uav/maize_3_nerac_2016_1"
+        user_prompt="Develop a computer vison method to detect all plants in given RGB images. Use only classical CV methods, no deep learning.",
+        dataset_path="data/data_structured/crop_line_uav/sunflower_1_auzeville_2019_1"
     )
 
     graph = build_graph(settings)

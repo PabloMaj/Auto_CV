@@ -19,9 +19,9 @@ class AgentState(BaseModel):
     step_id: Optional[int] = 1
     generated_code: Optional[str] = None
 
-    execution_success: Optional[bool] = None
-    execution_output: Optional[str] = None
-    execution_error: Optional[str] = None
+    runner_success: Optional[bool] = None
+    runner_output: Optional[str] = None
+    runner_error: Optional[str] = None
 
     evaluation_metric: Optional[float] = None
     evaluation_summary: Optional[str] = None

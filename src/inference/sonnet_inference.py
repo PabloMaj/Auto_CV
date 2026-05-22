@@ -1,10 +1,11 @@
 import base64
+from io import BytesIO
 import os
 import mimetypes
 import time
-from pathlib import Path
 from typing import Optional
 
+from PIL import Image
 import anthropic
 
 from src.inference.base import BaseInference
@@ -16,6 +17,8 @@ logger = get_logger(__name__)
 SYSTEM_PROMPT = """
 You are an elite Computer Vision Engineer and Python Developer.
 """
+
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 class SonnetInference(BaseInference):
@@ -38,10 +41,49 @@ class SonnetInference(BaseInference):
         self.max_tokens = max_tokens
         self.max_retries = max_retries
 
+    def encode_image_base64_compressed(self, image_path, quality=85, max_size=(1600, 1600)):
+        """
+        Compress image before sending to Claude API.
+        """
+
+        print(f"Compressing image for Sonnet: {image_path}")
+
+        with Image.open(image_path) as img:
+
+            print(f"Original image size: {img.size}, mode: {img.mode}")
+
+            # Convert RGBA -> RGB for JPEG
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            # Resize if too large
+            img.thumbnail(max_size)
+
+            buffer = BytesIO()
+
+            img.save(
+                buffer,
+                format="JPEG",
+                quality=quality,
+                optimize=True
+            )
+
+            image_bytes = buffer.getvalue()
+
+            if len(image_bytes) > MAX_IMAGE_SIZE:
+                raise ValueError(
+                    f"Compressed image still exceeds 5MB: "
+                    f"{len(image_bytes)} bytes"
+                )
+
+            return base64.b64encode(image_bytes).decode("utf-8")
+
+    """
     def encode_image_base64(self, image_path):
         image_path = Path(image_path)
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+    """
 
     def get_media_type(self, image_path):
         media_type, _ = mimetypes.guess_type(str(image_path))
@@ -53,15 +95,15 @@ class SonnetInference(BaseInference):
 
         if image_paths:
             for image_path in image_paths:
+                print(f"Processing image for prompt: {image_path}")
                 try:
-                    encoded = self.encode_image_base64(image_path)
-                    media_type = self.get_media_type(image_path)
+                    encoded = self.encode_image_base64_compressed(image_path=image_path)
 
                     content.append({
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": media_type,
+                            "media_type": "image/jpeg",
                             "data": encoded
                         }
                     })

@@ -2,3 +2,5 @@ data
 resources_ds
 workspace
 __pycache__
+.env
+.vscode
