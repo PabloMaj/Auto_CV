@@ -31,14 +31,14 @@ class SystemSettings(BaseModel):
     enable_dataset_enricher: bool = False
 
     enable_iterative_improvement: bool = True
-    enable_novel_solution_search: bool = True
+    enable_novel_solution_search: bool = False
 
     # ======================================================
     # LIMITS / CONTROL
     # ======================================================
 
     max_runner_retries: int = 5
-    max_improvement_steps: int = 5
+    max_improvement_steps: int = 3
     max_novel_solutions: int = 2
 
     # ======================================================

@@ -23,7 +23,7 @@ def resolve_reasoning_type(state, settings: SystemSettings):
     step_id = state.get("step_id", 1)
 
     # BUG FIXING (highest priority)
-    if state.get("execution_success") is False:
+    if state.get("runner_success") is False:
         if state.get("retry_count", 0) < settings.max_runner_retries:
             return "bug_fixing"
 
@@ -33,7 +33,10 @@ def resolve_reasoning_type(state, settings: SystemSettings):
 
     # NOVELTY
     if stage_id >= 2 and step_id == 1:
-        return "novelty_coding"
+        if settings.enable_novel_solution_search:
+            return "novelty_coding"
+        else:
+            return "initial_coding"
 
     # IMPROVEMENT
     if step_id > 1:
@@ -167,7 +170,7 @@ def build_graph(settings: SystemSettings):
 
     def route_after_runner(state):
 
-        if state.get("execution_success") is False:
+        if state.get("runner_success") is False:
             return "programmer"
 
         return "evaluator"
