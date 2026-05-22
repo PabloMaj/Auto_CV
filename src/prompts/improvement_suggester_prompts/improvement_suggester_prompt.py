@@ -26,7 +26,7 @@ Rules:
 - correlate visual problems with code problems
 - avoid generic suggestions
 - produce concise output
-- when providing improvement suggestions include concrete code changes that clearly tell the next agent exactly what to do 
+- when providing improvement suggestions include concrete code changes that clearly tell the next agent exactly what to do
 (e.g. increasing a threshold from 10 to 20, reducing kernel size, etc.). The next agent should know precisely what changes to implement.
 - Adjust parameters rationally based on observed errors. Avoid large changes that overshoot the optimal value,
 as they often lead to missed detections. Prefer small, incremental adjustments rather than aggressive tuning.
