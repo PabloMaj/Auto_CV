@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import cv2
@@ -19,160 +20,171 @@ def evaluate_bounding_boxes(state):
 
         return state
 
-    path_to_val_images = Path(state["split_paths"]["val"]["images"])
-    path_to_val_labels = Path(state["split_paths"]["val"]["labels"])
+    splits = ["val", "test"]
 
-    image_files = list(path_to_val_images.iterdir())
+    state["evaluation"] = {}
+    state["evaluation_visualizations"] = {}
 
-    all_preds = []
-    all_gts = {}
-    vis_paths = []
+    for split in splits:
 
-    tp_all = []
-    fp_all = []
-    fn_all = []
+        all_preds = []
+        all_gts = {}
+        vis_paths = []
 
-    # -------------------------
-    # 1. COLLECT DATA
-    # -------------------------
-    for img_path in tqdm(image_files, desc="Evaluating"):
-        if not img_path.is_file():
-            continue
+        tp_all = []
+        fp_all = []
+        fn_all = []
 
-        try:
-            pred_boxes = predictor.predict(str(img_path))
-        except Exception:
-            logger.error(f"Prediction failed:\n{traceback.format_exc()}")
-            continue
+        path_to_images = Path(state["split_paths"][split]["images"])
+        path_to_labels = Path(state["split_paths"][split]["labels"])
 
-        img = cv2.imread(str(img_path))
-        if img is None:
-            continue
+        image_files = list(path_to_images.iterdir())
 
-        gt_boxes = load_yolo_labels(path_to_val_labels, img_path.stem, img.shape[:2])
-
-        all_gts[img_path.name] = gt_boxes
-
-        for p in pred_boxes:
-            all_preds.append({
-                "image": img_path.name,
-                "bbox": p["bbox"],
-                "score": p.get("confidence", 1.0),
-                "label": p.get("label", None)
-            })
-
-    # -------------------------
-    # 2. SORT BY CONFIDENCE
-    # -------------------------
-    all_preds = sorted(all_preds, key=lambda x: x["score"], reverse=True)
-
-    # -------------------------
-    # 3. GLOBAL MATCHING (AP CORE)
-    # -------------------------
-    used_gts = {img: [False] * len(gts) for img, gts in all_gts.items()}
-
-    for pred in all_preds:
-        img_name = pred["image"]
-        gts = all_gts.get(img_name, [])
-
-        best_iou = 0.0
-        best_idx = -1
-
-        for i, gt in enumerate(gts):
-            if used_gts[img_name][i]:
+        # -------------------------
+        # 1. COLLECT DATA
+        # -------------------------
+        for img_path in tqdm(image_files, desc="Evaluating"):
+            if not img_path.is_file():
                 continue
 
-            iou_val = compute_iou(pred, gt)
+            try:
+                pred_boxes = predictor.predict(str(img_path))
+            except Exception:
+                logger.error(f"Prediction failed:\n{traceback.format_exc()}")
+                continue
 
-            if iou_val > best_iou:
-                best_iou = iou_val
-                best_idx = i
+            img = cv2.imread(str(img_path))
+            if img is None:
+                continue
 
-        if best_iou >= 0.5:
-            tp_all.append({
-                "image": img_name,
-                "bbox": pred["bbox"],
-                "gt": gts[best_idx]["bbox"],
-                "score": pred["score"]
-            })
-            used_gts[img_name][best_idx] = True
-        else:
-            fp_all.append({
-                "image": img_name,
-                "bbox": pred["bbox"],
-                "score": pred["score"]
-            })
+            gt_boxes = load_yolo_labels(path_to_labels, img_path.stem, img.shape[:2])
 
-    # -------------------------
-    # 4. FN (MISSED GTS)
-    # -------------------------
-    for img_name, gts in all_gts.items():
-        for i, gt in enumerate(gts):
-            if not used_gts[img_name][i]:
-                fn_all.append({
-                    "image": img_name,
-                    "bbox": gt["bbox"]
+            all_gts[img_path.name] = gt_boxes
+
+            for p in pred_boxes:
+                all_preds.append({
+                    "image": img_path.name,
+                    "bbox": p["bbox"],
+                    "score": p.get("confidence", 1.0),
+                    "label": p.get("label", None)
                 })
 
-    # -------------------------
-    # 5. AP50 (PR CURVE)
-    # -------------------------
-    pred_scores = []
+        # -------------------------
+        # 2. SORT BY CONFIDENCE
+        # -------------------------
+        all_preds = sorted(all_preds, key=lambda x: x["score"], reverse=True)
 
-    for p in tp_all:
-        pred_scores.append((p["score"], 1))  # TP
+        # -------------------------
+        # 3. GLOBAL MATCHING (AP CORE)
+        # -------------------------
+        used_gts = {img: [False] * len(gts) for img, gts in all_gts.items()}
 
-    for p in fp_all:
-        pred_scores.append((p["score"], 0))  # FP
+        for pred in all_preds:
+            img_name = pred["image"]
+            gts = all_gts.get(img_name, [])
 
-    # 2. sort by confidence
-    pred_scores = sorted(pred_scores, key=lambda x: x[0], reverse=True)
+            best_iou = 0.0
+            best_idx = -1
 
-    if len(pred_scores) == 0:
-        ap50 = 0.0
-    else:
-        tp = np.array([p[1] for p in pred_scores])
-        fp = np.array([1 - p[1] for p in pred_scores])
+            for i, gt in enumerate(gts):
+                if used_gts[img_name][i]:
+                    continue
 
-        tp_cum = np.cumsum(tp)
-        fp_cum = np.cumsum(fp)
+                iou_val = compute_iou(pred, gt)
 
-        precision = tp_cum / (tp_cum + fp_cum + 1e-9)
-        recall = tp_cum / (sum(len(v) for v in all_gts.values()) + 1e-9)
+                if iou_val > best_iou:
+                    best_iou = iou_val
+                    best_idx = i
 
-        recall_points = np.linspace(0, 1, 101)
+            if best_iou >= 0.5:
+                tp_all.append({
+                    "image": img_name,
+                    "bbox": pred["bbox"],
+                    "gt": gts[best_idx]["bbox"],
+                    "score": pred["score"]
+                })
+                used_gts[img_name][best_idx] = True
+            else:
+                fp_all.append({
+                    "image": img_name,
+                    "bbox": pred["bbox"],
+                    "score": pred["score"]
+                })
 
-        precision_interp = np.interp(recall_points, recall, precision)
+        # -------------------------
+        # 4. FN (MISSED GTS)
+        # -------------------------
+        for img_name, gts in all_gts.items():
+            for i, gt in enumerate(gts):
+                if not used_gts[img_name][i]:
+                    fn_all.append({
+                        "image": img_name,
+                        "bbox": gt["bbox"]
+                    })
 
-        ap50 = float(np.mean(precision_interp))
+        # -------------------------
+        # 5. AP50 (PR CURVE)
+        # -------------------------
+        pred_scores = []
 
-    # -------------------------
-    # 6. VISUALIZATION PER IMAGE
-    # -------------------------
-    vis_dir = Path(f"workspace/stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}/evaluation_visualizations")
-    vis_dir.mkdir(parents=True, exist_ok=True)
+        for p in tp_all:
+            pred_scores.append((p["score"], 1))  # TP
 
-    for img_path in image_files:
-        vis = visualize_detections(img_path, tp_all, fp_all, fn_all)
-        if vis is not None:
-            out_path = vis_dir / f"{img_path.stem}_tp_fp_fn.jpg"
+        for p in fp_all:
+            pred_scores.append((p["score"], 0))  # FP
+
+        # 2. sort by confidence
+        pred_scores = sorted(pred_scores, key=lambda x: x[0], reverse=True)
+
+        if len(pred_scores) == 0:
+            ap50 = 0.0
+        else:
+            tp = np.array([p[1] for p in pred_scores])
+            fp = np.array([1 - p[1] for p in pred_scores])
+
+            tp_cum = np.cumsum(tp)
+            fp_cum = np.cumsum(fp)
+
+            precision = tp_cum / (tp_cum + fp_cum + 1e-9)
+            recall = tp_cum / (sum(len(v) for v in all_gts.values()) + 1e-9)
+
+            recall_points = np.linspace(0, 1, 101)
+
+            precision_interp = np.interp(recall_points, recall, precision)
+
+            ap50 = float(np.mean(precision_interp))
+
+        # -------------------------
+        # 6. VISUALIZATION PER IMAGE
+        # -------------------------
+        vis_dir = Path(f"workspace/stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}/evaluation/visualizations/{split}/")
+        vis_dir.mkdir(parents=True, exist_ok=True)
+
+        for img_path in image_files:
+            vis = visualize_detections(img_path, tp_all, fp_all, fn_all)
             if vis is not None:
-                cv2.imwrite(str(out_path), cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
-                vis_paths.append(str(out_path))
+                out_path = vis_dir / f"{img_path.stem}_tp_fp_fn.jpg"
+                if vis is not None:
+                    cv2.imwrite(str(out_path), cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
+                    vis_paths.append(str(out_path))
 
-    # -------------------------
-    # 7. SAVE RESULT
-    # -------------------------
-    state["evaluation"] = {
-        "metric_name": "AP50",
-        "metric_value": round(ap50, 4),
-        "status": "success",
-        "tp": len(tp_all),
-        "fp": len(fp_all),
-        "fn": len(fn_all)
-    }
+        # -------------------------
+        # 7. SAVE RESULT
+        # -------------------------
+        state["evaluation"][split] = {
+            "metric_name": "AP50",
+            "metric_value": round(ap50, 4),
+            "status": "success",
+            "tp": len(tp_all),
+            "fp": len(fp_all),
+            "fn": len(fn_all)
+        }
 
-    state["evaluation_visualizations"] = vis_paths
+        metrics_dir = Path(f"workspace/stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}/evaluation/metrics/{split}/")
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        json.dump(state["evaluation"][split], open(metrics_dir / f"{split}_metrics.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+
+        state["evaluation_visualizations"][split] = vis_paths
 
     return state
 

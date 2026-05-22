@@ -18,8 +18,8 @@ class ImprovementSuggesterAgent:
 
         user_prompt = state.get("user_prompt", "")
         generated_code = state.get("generated_code", "")
-        vis_paths = state.get("evaluation_visualizations", [])
-        vis_paths = vis_paths[:2]  # max 2 images for prompt to avoid hitting token limits
+        vis_paths = state.get("evaluation_visualizations", {}).get("val", [])
+        vis_paths = vis_paths[:2]
 
         prompt = build_user_prompt(user_prompt=user_prompt, generated_code=generated_code)
         messages = self.llm.build_messages(prompt=prompt, image_paths=vis_paths, system_prompt=SYSTEM_PROMPT)
