@@ -22,20 +22,14 @@ IMPORTANT:
 The images attached to this message are evaluation visualizations.
 You MUST analyze them carefully together with the source code.
 
-Focus on:
-- false positives
-- false negatives
-- localization quality
-- missing detections
-- thresholding problems
-- postprocessing issues
-
 Rules:
 - correlate visual problems with code problems
-- avoid hallucinations
 - avoid generic suggestions
-- provide practical engineering recommendations
 - produce concise output
+- when providing improvement suggestions include concrete code changes that clearly tell the next agent exactly what to do 
+(e.g. increasing a threshold from 10 to 20, reducing kernel size, etc.). The next agent should know precisely what changes to implement.
+- Adjust parameters rationally based on observed errors. Avoid large changes that overshoot the optimal value,
+as they often lead to missed detections. Prefer small, incremental adjustments rather than aggressive tuning.
 
 Return output ONLY in the following format.
 

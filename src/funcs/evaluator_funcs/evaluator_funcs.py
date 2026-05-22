@@ -8,6 +8,7 @@ import numpy as np
 
 from tqdm import tqdm
 from src.utils.logger import get_logger
+from src.state.agent_state import EvalArtifact
 
 logger = get_logger(__name__)
 
@@ -185,6 +186,10 @@ def evaluate_bounding_boxes(state):
         json.dump(state["evaluation"][split], open(metrics_dir / f"{split}_metrics.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 
         state["evaluation_visualizations"][split] = vis_paths
+
+        if split == "val":
+            step_key = f"stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}"
+            state["eval_artifacts"].append(EvalArtifact(step_key=step_key, value=ap50, img_paths=vis_paths))
 
     return state
 

@@ -1,5 +1,12 @@
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
+from pathlib import Path
+
+
+class EvalArtifact(BaseModel):
+    step_key: str
+    value: float
+    img_paths: List[Path] = Field(default_factory=list)
 
 
 class AgentState(BaseModel):
@@ -18,6 +25,7 @@ class AgentState(BaseModel):
     stage_id: Optional[int] = 1
     step_id: Optional[int] = 1
     generated_code: Optional[str] = None
+    eval_artifacts: List[EvalArtifact] = Field(default_factory=list)
 
     runner_success: Optional[bool] = None
     runner_output: Optional[str] = None

@@ -18,8 +18,14 @@ class ImprovementSuggesterAgent:
 
         user_prompt = state.get("user_prompt", "")
         generated_code = state.get("generated_code", "")
-        vis_paths = state.get("evaluation_visualizations", {}).get("val", [])
-        vis_paths = vis_paths[:2]
+
+        # Choose viusualization from best performing step
+        stage_id = state.get("stage_id", 0)
+        step_id = state.get("step_id", 0)
+        filtered = [a for a in state["eval_artifacts"] if a.step_key.startswith(f"stage_{stage_id}_")]
+        best = max(filtered, key=lambda a: a.value, default=None)
+        vis_paths = best.img_paths[:2] if best else []
+        logger.info(f"For current stage and step {stage_id}_{step_id} we choose mistakes visualizations from {best.step_key if best else 'N/A'} with metric {best.value if best else 'N/A'} -> {vis_paths}")
 
         prompt = build_user_prompt(user_prompt=user_prompt, generated_code=generated_code)
         messages = self.llm.build_messages(prompt=prompt, image_paths=vis_paths, system_prompt=SYSTEM_PROMPT)
