@@ -23,7 +23,9 @@ class DLModelTrainerAgent:
             raw_dataset=Path(dataset_path),
             processed_dataset=Path(dataset_path + "_roi640"),
             yolo_train_artifacts_save_path=artifacts_path,
-            class_names=["object"]
+            class_names=["object"],
+            pseudo_images_dir=Path("dataset_enrichment_pseudo") / dataset_group / dataset_name / "tiled_unlabeled" / "images",
+            pseudo_labels_dir=Path("dataset_enrichment_pseudo") / dataset_group / dataset_name / "pseudo_labels",
         )
         pipeline.run()
 

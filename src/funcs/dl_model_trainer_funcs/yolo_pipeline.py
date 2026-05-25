@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import shutil
 from src.funcs.dl_model_trainer_funcs.yolo_roi_preprocessor import YOLOROIPreprocessor
 from src.funcs.dl_model_trainer_funcs.yolo_trainer import YOLOTrainer
 
@@ -14,12 +14,68 @@ class YOLOPipeline:
         raw_dataset: Path,
         processed_dataset: Path,
         yolo_train_artifacts_save_path: Path,
-        class_names: list
+        class_names: list,
+        pseudo_images_dir: Path = None,
+        pseudo_labels_dir: Path = None,
     ):
         self.raw_dataset = raw_dataset
         self.processed_dataset = processed_dataset
         self.yolo_train_artifacts_save_path = yolo_train_artifacts_save_path
         self.class_names = class_names
+        self.pseudo_images_dir = pseudo_images_dir
+        self.pseudo_labels_dir = pseudo_labels_dir
+
+        # print(os.listdir(str(self.pseudo_images_dir)))
+        # print(os.listdir(str(self.pseudo_labels_dir)))
+
+    #  -----------------------------
+    def copy_pseudo_labeled_data(self):
+        """
+        Copies tiled pseudo-labeled samples
+        directly into TRAIN split.
+        """
+
+        if self.pseudo_images_dir is None or self.pseudo_labels_dir is None:
+            print("No pseudo-labeled dataset provided.")
+            return
+
+        target_images_dir = self.processed_dataset / "images" / "train"
+        target_labels_dir = self.processed_dataset / "labels" / "train"
+
+        target_images_dir.mkdir(parents=True, exist_ok=True)
+        target_labels_dir.mkdir(parents=True, exist_ok=True)
+
+        image_extensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff"]
+
+        copied = 0
+
+        print("LABEL DIR:", self.pseudo_labels_dir)
+        print("FILES FOUND:", list(self.pseudo_labels_dir.glob("*.txt")))
+
+        for label_file in self.pseudo_labels_dir.glob("*.txt"):
+
+            stem = label_file.stem
+
+            image_file = None
+
+            for ext in image_extensions:
+
+                candidate = self.pseudo_images_dir / f"{stem}{ext}"
+
+                if candidate.exists():
+                    image_file = candidate
+                    break
+
+            if image_file is None:
+                print(f"[WARNING] Missing image for: {label_file.name}")
+                continue
+
+            shutil.copy2(image_file, target_images_dir / image_file.name)
+            shutil.copy2(label_file, target_labels_dir / label_file.name)
+
+            copied += 1
+
+        print(f"Copied {copied} pseudo-labeled train samples.")
 
     # -----------------------------
     def run_preprocessing(self):
@@ -30,8 +86,11 @@ class YOLOPipeline:
             overlap=0.5
         )
 
-        # 🔥 split-safe generation
+        # split-safe generation
         pre.generate()
+
+        # add pseudo labeled samples ONLY to train split
+        self.copy_pseudo_labeled_data()
 
         yaml_path = pre.create_yaml(self.class_names)
 
