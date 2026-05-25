@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     initial_state = AgentState(
         user_prompt="Develop a computer vison method to detect all plants in given RGB images. Use only classical CV methods, no deep learning.",
-        dataset_path="data/data_structured/crop_line_uav/sunflower_1_auzeville_2019_1"
+        dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1"
     )
 
     graph = build_graph(settings)
