@@ -156,7 +156,11 @@ def build_graph(settings: SystemSettings):
         else:
             graph.add_edge("dataset_enricher", "programmer")
     else:
-        graph.add_edge("data_analyser", "programmer")
+        if settings.enable_dl_model_trainer:
+            graph.add_edge("data_analyser", "dl_model_trainer")
+            graph.add_edge("dl_model_trainer", "programmer")
+        else:
+            graph.add_edge("data_analyser", "programmer")
 
     # ======================================================
     # MAIN LOOP

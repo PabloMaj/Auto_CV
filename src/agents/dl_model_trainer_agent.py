@@ -29,4 +29,6 @@ class DLModelTrainerAgent:
         )
         pipeline.run()
 
+        state["yolo_model_path"] = str(artifacts_path / "weights" / "best.pt")
+
         return state

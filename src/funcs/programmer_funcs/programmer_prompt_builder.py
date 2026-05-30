@@ -26,6 +26,7 @@ class ProgrammerPromptBuilder:
             desired_output_specification=state["desired_output_definition"],
             code_start_token=code_start_token,
             code_end_token=code_end_token,
+            model_path=state.get("yolo_model_path", "")
         )
 
         if reasoning_type == ProgrammerReasoningType.INITIAL_CODING:
