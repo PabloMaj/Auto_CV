@@ -113,10 +113,17 @@ class YOLOPredictor:
                 shifted = self.xyxy_shift(tile_boxes, x1, y1)
                 all_boxes.extend(shifted)
 
-        # 🔥 global merge
         final_boxes = self.nms(all_boxes, iou_thr=0.5)
 
-        return final_boxes
+        output = []
+        for x1, y1, x2, y2, conf, cls in final_boxes:
+            output.append({
+                "bbox": [x1, y1, x2, y2],
+                "label": self.model.names[int(cls)],
+                "confidence": conf
+            })
+
+        return output
 
     # -----------------------------
     # visualize
@@ -125,17 +132,13 @@ class YOLOPredictor:
         out = image.copy()
 
         for b in boxes:
-            x1, y1, x2, y2, conf, cls = b
+            x1, y1, x2, y2 = b["bbox"]
+            conf = b["confidence"]
+            label = b["label"]
+
             cv2.rectangle(out, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.putText(
-                out,
-                f"{cls}:{conf:.2f}",
-                (int(x1), int(y1) - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                1
-            )
+            cv2.putText(out, f"{label}:{conf:.2f}", (int(x1), int(y1) - 5), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5, (0, 255, 0), 1)
 
         return out
 
@@ -148,22 +151,14 @@ if __name__ == "__main__":
     IMAGE_PATH = Path(ROOT_PATH) / "data" / "data_structured" / "crop_line_uav" / "maize_3_nerac_2016_1" / "images" / "test" / "20.png"
     OUTPUT_PATH = Path(ROOT_PATH) / "result.jpg"
 
-    # wczytanie obrazu
     image = cv2.imread(str(IMAGE_PATH))
-
     if image is None:
-        raise FileNotFoundError(f"Nie znaleziono obrazu: {IMAGE_PATH}")
+        raise FileNotFoundError(f"Image not found: {IMAGE_PATH}")
 
-    # inicjalizacja predyktora
-    predictor = YOLOPredictor(
-        model_path=MODEL_PATH,
-        tile_size=640,
-        overlap=0.5,
-        conf=0.25
-    )
-
-    # predykcja
+    predictor = YOLOPredictor(model_path=MODEL_PATH, tile_size=640, overlap=0.5, conf=0.25)
     boxes = predictor.predict(image)
+
+    print(boxes)
 
     print(f"Wykryto obiektów: {len(boxes)}")
 
