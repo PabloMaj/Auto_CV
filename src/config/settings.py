@@ -27,7 +27,7 @@ class SystemSettings(BaseModel):
     # FEATURES FLAGS
     # ======================================================
 
-    enable_dl_model_trainer: bool = True
+    enable_dl_model_trainer: bool = False
     enable_dataset_enricher: bool = False
 
     enable_iterative_improvement: bool = True

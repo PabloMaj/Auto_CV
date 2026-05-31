@@ -36,6 +36,26 @@ class DesiredOutputRegistry:
             structure="np.ndarray with shape [H, W] or [C, H, W]",
             example="mask.shape == (512, 512)"
         ),
+
+        "points": DesiredOutputDefinition(
+            name="points",
+            description="List of midpoint coordinates defined by two-dimensional points.",
+            structure=(
+                "List[Dict] where each Dict contains: "
+                "point=[x, y]"
+            ),
+            example='[{"point": [15.5, 27.0]}]'
+        ),
+
+        "line_segments": DesiredOutputDefinition(
+            name="line_segments",
+            description="List of line segments defined by two endpoints.",
+            structure=(
+                "List[Dict] where each Dict contains: "
+                "line=[x1, y1, x2, y2]"
+            ),
+            example='[{"line": [10, 20, 100, 120]}]'
+        )
     }
 
     @classmethod
