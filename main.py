@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     initial_state = AgentState(
         user_prompt="Develop a computer vison method to detect all plants in given RGB images. Use only classical CV. Return detections in form of midpoints.",
-        dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1"
+        dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_midpoints"
     )
 
     graph = build_graph(settings)

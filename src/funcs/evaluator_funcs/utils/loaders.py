@@ -46,6 +46,8 @@ def load_yolo_points(labels_dir, img_stem, img_shape=None):
     class_id x y  (normalized)
     """
 
+    h, w = img_shape
+
     labels_dir = Path(labels_dir)
     label_file = labels_dir / f"{img_stem}.txt"
 
@@ -63,6 +65,9 @@ def load_yolo_points(labels_dir, img_stem, img_shape=None):
 
             cls, x, y = map(float, parts)
 
+            x = x * w
+            y = y * h
+
             points.append({
                 "point": [x, y],
                 "label": int(cls)
@@ -76,6 +81,8 @@ def load_yolo_lines(labels_dir, img_stem, img_shape=None):
     Format:
     class_id x1 y1 x2 y2 (normalized)
     """
+
+    h, w = img_shape
 
     labels_dir = Path(labels_dir)
     label_file = labels_dir / f"{img_stem}.txt"
@@ -93,6 +100,11 @@ def load_yolo_lines(labels_dir, img_stem, img_shape=None):
                 continue
 
             cls, x1, y1, x2, y2 = map(float, parts)
+
+            x1 *= w
+            y1 *= h
+            x2 *= w
+            y2 *= h
 
             lines.append({
                 "line": [x1, y1, x2, y2],

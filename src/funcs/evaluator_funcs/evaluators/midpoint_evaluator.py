@@ -21,7 +21,7 @@ class MidpointEvaluator(BaseEvaluator):
     # -----------------------------------------
     def match(self, predictions, ground_truths):
 
-        matcher = PointMatcher(distance_threshold=0.05)
+        matcher = PointMatcher(distance_threshold=25)
 
         return matcher.match(predictions=predictions, ground_truths=ground_truths)
 

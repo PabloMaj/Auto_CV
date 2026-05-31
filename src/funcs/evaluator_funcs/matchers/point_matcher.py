@@ -3,7 +3,7 @@ import numpy as np
 
 class PointMatcher:
 
-    def __init__(self, distance_threshold=0.05):
+    def __init__(self, distance_threshold=25):
         self.distance_threshold = distance_threshold
 
     def _dist(self, a, b):
