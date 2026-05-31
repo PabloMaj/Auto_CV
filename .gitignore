@@ -4,3 +4,6 @@ workspace
 __pycache__
 .env
 .vscode
+resources
+dataset_enrichment_pseudo
+yolo_train_artifacts
