@@ -3,7 +3,7 @@ import numpy as np
 
 class LineMatcher:
 
-    def __init__(self, distance_threshold=0.05, angle_threshold=10.0):
+    def __init__(self, distance_threshold=100, angle_threshold=10.0):
         self.distance_threshold = distance_threshold
         self.angle_threshold = angle_threshold
 
