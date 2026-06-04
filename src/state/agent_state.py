@@ -31,20 +31,7 @@ class AgentState(BaseModel):
     runner_output: Optional[str] = None
     runner_error: Optional[str] = None
 
-    evaluation_metric: Optional[float] = None
-    evaluation_summary: Optional[str] = None
-
-    prediction_visualizations: List[str] = Field(default_factory=list)
-
     improvement_suggestions: List[str] = Field(default_factory=list)
-    previous_solution_descriptions: List[str] = Field(default_factory=list)
-
-    current_solution_iteration: int = 0
-    current_improvement_step: int = 0
-
-    previous_best_metric: float = -1.0
-
-    logs: List[str] = Field(default_factory=list)
 
     demo_app_exe_path: Optional[str] = None
 

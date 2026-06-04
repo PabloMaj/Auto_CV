@@ -41,6 +41,10 @@ def resolve_reasoning_type(state, settings: SystemSettings):
 
     # IMPROVEMENT
     if step_id > 1:
+        val_metrics = (state.get("evaluation") or {}).get("val") or {}
+        metric = val_metrics.get("metric_value", 0.0)
+        if metric < 0.2:
+            return "initial_coding"
         return "improving_based_on_suggestion"
 
     return "initial_coding"
