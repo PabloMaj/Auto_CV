@@ -98,7 +98,7 @@ def build_graph(settings: SystemSettings):
     )
 
     runner = RunnerAgent()
-    evaluator = EvaluatorAgent()
+    evaluator = EvaluatorAgent(settings=settings)
     demo_builder = DemoBuilderAgent()
 
     suggester = ImprovementSuggesterAgent(
@@ -106,7 +106,8 @@ def build_graph(settings: SystemSettings):
         {
             "model": settings.improvement_llm.model,
             **settings.improvement_llm.inference_kwargs
-        }
+        },
+        label_free=settings.enable_label_free_improvement,
     )
 
     # ======================================================

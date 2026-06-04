@@ -32,6 +32,7 @@ class SystemSettings(BaseModel):
 
     enable_iterative_improvement: bool = True
     enable_novel_solution_search: bool = False
+    enable_label_free_improvement: bool = True
 
     # ======================================================
     # LIMITS / CONTROL

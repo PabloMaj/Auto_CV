@@ -112,6 +112,36 @@ class BaseEvaluator(ABC):
         }
 
     # -------------------------------------------------
+    # LABEL-FREE MODE: only evaluate test split
+    # -------------------------------------------------
+    def evaluate_test_split_only(self, state):
+        """Run standard evaluation on test split only (val handled by LLM judge)."""
+
+        logger.info(f"Running {self.__class__.__name__} — test split only")
+
+        predictor = load_predictor(state)
+
+        if predictor is None:
+            state["evaluation"] = {
+                "metric_name": self.metric_name,
+                "metric_value": 0.0,
+                "status": "predictor_load_failed"
+            }
+            return state
+
+        if not isinstance(state.get("evaluation"), dict):
+            state["evaluation"] = {}
+        if not isinstance(state.get("evaluation_visualizations"), dict):
+            state["evaluation_visualizations"] = {}
+
+        result = self._evaluate_split(predictor=predictor, state=state, split="test")
+        state["evaluation"]["test"] = result["metrics"]
+        state["evaluation_visualizations"]["test"] = result["vis_paths"]
+
+        logger.info(f"{self.__class__.__name__} test-only evaluation finished")
+        return state
+
+    # -------------------------------------------------
     # ABSTRACT (domain-specific only)
     # -------------------------------------------------
     @abstractmethod
