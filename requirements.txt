@@ -13,3 +13,4 @@ matplotlib
 pillow
 scikit-learn
 segmentation-models-pytorch
+pyinstaller
