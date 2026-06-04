@@ -112,10 +112,10 @@ class BaseEvaluator(ABC):
         }
 
     # -------------------------------------------------
-    # LABEL-FREE MODE: only evaluate test split
+    # LABEL-FREE MODE: reference GT evaluations
     # -------------------------------------------------
     def evaluate_test_split_only(self, state):
-        """Run standard evaluation on test split only (val handled by LLM judge)."""
+        """Run standard GT evaluation on test split only (val handled by LLM judge)."""
 
         logger.info(f"Running {self.__class__.__name__} — test split only")
 
@@ -139,6 +139,42 @@ class BaseEvaluator(ABC):
         state["evaluation_visualizations"]["test"] = result["vis_paths"]
 
         logger.info(f"{self.__class__.__name__} test-only evaluation finished")
+        return state
+
+    def evaluate_val_reference(self, state):
+        """Run standard GT evaluation on val split for reference only.
+
+        Results are stored under state['evaluation']['val_gt'] and saved to
+        val_gt_metrics.json so they do not overwrite the LLM-judge optimisation signal.
+        """
+
+        logger.info(f"Running {self.__class__.__name__} — val GT reference")
+
+        predictor = load_predictor(state)
+        if predictor is None:
+            logger.warning("evaluate_val_reference: predictor load failed — skipping")
+            return state
+
+        if not isinstance(state.get("evaluation"), dict):
+            state["evaluation"] = {}
+
+        result = self._evaluate_split(predictor=predictor, state=state, split="val")
+        state["evaluation"]["val_gt"] = result["metrics"]
+
+        # Save under a separate filename so val_metrics.json stays as LLM-judge score
+        stage_id = state.get("stage_id", 0)
+        step_id = state.get("step_id", 0)
+        metrics_dir = Path(
+            f"workspace/stage_{stage_id}_step_{step_id}/evaluation/metrics/val"
+        )
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        with open(metrics_dir / "val_gt_metrics.json", "w") as f:
+            json.dump(result["metrics"], f, indent=2)
+
+        logger.info(
+            f"Val GT reference metric: "
+            f"{result['metrics'].get('metric_value', 'n/a')}"
+        )
         return state
 
     # -------------------------------------------------

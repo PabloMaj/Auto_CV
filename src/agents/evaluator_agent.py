@@ -34,9 +34,10 @@ class EvaluatorAgent:
             return state
 
         if self.llm_judge:
-            # label-free: standard eval on test, LLM judge on val
+            # label-free: GT on test + val reference, LLM judge as optimisation signal
             state = evaluator.evaluate_test_split_only(state)
-            state = self.llm_judge.evaluate_val(state)
+            state = evaluator.evaluate_val_reference(state)
+            state = self.llm_judge.evaluate_val(state)  # overwrites val with LLM score
         else:
             state = evaluator.evaluate(state)
 
