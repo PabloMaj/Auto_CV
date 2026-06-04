@@ -9,6 +9,7 @@ from src.agents.programmer_agent import ProgrammerAgent
 from src.agents.runner_agent import RunnerAgent
 from src.agents.evaluator_agent import EvaluatorAgent
 from src.agents.improvement_suggester_agent import ImprovementSuggesterAgent
+from src.agents.demo_builder_agent import DemoBuilderAgent
 
 from src.config.settings import SystemSettings
 
@@ -94,6 +95,7 @@ def build_graph(settings: SystemSettings):
 
     runner = RunnerAgent()
     evaluator = EvaluatorAgent()
+    demo_builder = DemoBuilderAgent()
 
     suggester = ImprovementSuggesterAgent(
         settings.improvement_llm.backend,
@@ -134,6 +136,7 @@ def build_graph(settings: SystemSettings):
     graph.add_node("runner", runner.run)
     graph.add_node("evaluator", evaluator.run)
     graph.add_node("improvement_suggester", suggester.run)
+    graph.add_node("demo_builder", demo_builder.run)
 
     def improvement_state_updater(state):
         return update_after_improvement(state, settings)
@@ -195,7 +198,7 @@ def build_graph(settings: SystemSettings):
     def route_after_improvement(state):
 
         if state.get("stage_id", 0) > settings.max_novel_solutions:
-            return END
+            return "demo_builder"
 
         return "programmer"
 
@@ -207,8 +210,10 @@ def build_graph(settings: SystemSettings):
         route_after_improvement,
         {
             "programmer": "programmer",
-            END: END
+            "demo_builder": "demo_builder",
         }
     )
+
+    graph.add_edge("demo_builder", END)
 
     return graph.compile()

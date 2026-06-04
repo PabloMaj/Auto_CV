@@ -46,4 +46,6 @@ class AgentState(BaseModel):
 
     logs: List[str] = Field(default_factory=list)
 
+    demo_app_exe_path: Optional[str] = None
+
     metadata: Dict[str, Any] = Field(default_factory=dict)
