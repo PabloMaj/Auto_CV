@@ -94,7 +94,8 @@ def build_graph(settings: SystemSettings):
         {
             "model": settings.programmer_llm.model,
             **settings.programmer_llm.inference_kwargs
-        }
+        },
+        label_free=settings.enable_label_free_improvement,
     )
 
     runner = RunnerAgent()

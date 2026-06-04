@@ -19,7 +19,8 @@ class ProgrammerReasoningType(str, Enum):
 class ProgrammerPromptBuilder:
 
     @classmethod
-    def build(cls, state, reasoning_type, code_start_token, code_end_token):
+    def build(cls, state, reasoning_type, code_start_token, code_end_token,
+              label_free: bool = False):
 
         base_prompt = BASE_PROGRAMMER_PROMPT.format(
             user_prompt=state["user_prompt"],
@@ -30,8 +31,18 @@ class ProgrammerPromptBuilder:
         )
 
         if reasoning_type == ProgrammerReasoningType.INITIAL_CODING:
+            if label_free:
+                images_desc = (
+                    "Attached are sample training images (raw, no annotations). "
+                    "Use them to understand the visual characteristics of the scene."
+                )
+            else:
+                images_desc = (
+                    "Attached are sample training images with ground-truth annotations "
+                    "overlaid in GREEN. Use them to understand the task and the expected output."
+                )
             return INITIAL_CODING_PROMPT.format(
-                raw_images_placeholder=state.get("raw_images_section", ""),
+                raw_images_placeholder=images_desc,
                 base_prompt=base_prompt,
             )
 
