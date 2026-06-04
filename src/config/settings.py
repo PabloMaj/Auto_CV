@@ -39,7 +39,7 @@ class SystemSettings(BaseModel):
     # ======================================================
 
     max_runner_retries: int = 5
-    max_improvement_steps: int = 3
+    max_improvement_steps: int = 10
     max_novel_solutions: int = 2
 
     # ======================================================
