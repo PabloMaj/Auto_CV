@@ -41,7 +41,9 @@ class LLMJudgeValEvaluator:
             logger.warning(f"Val image dir not found: {image_dir}")
             return state
 
-        exp_workspace = Path("workspace") / state.get("exp_id", "default")
+        repo_root = Path(__file__).resolve().parents[4]
+        exp_workspace = repo_root / "workspace" / state.get("exp_id", "default")
+        self.llm.log_dir = exp_workspace / "llm_logs" / "llm_judge" / f"stage_{stage_id}_step_{step_id}"
         vis_dir = exp_workspace / f"stage_{stage_id}_step_{step_id}/evaluation/visualizations/val"
         metrics_dir = exp_workspace / f"stage_{stage_id}_step_{step_id}/evaluation/metrics/val"
         vis_dir.mkdir(parents=True, exist_ok=True)

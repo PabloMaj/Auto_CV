@@ -1,8 +1,11 @@
 import base64
+import json
+from datetime import datetime
 from io import BytesIO
 import os
 import mimetypes
 import time
+from pathlib import Path
 from typing import Optional
 
 from PIL import Image
@@ -20,12 +23,39 @@ You are an elite Computer Vision Engineer and Python Developer.
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 
+INPUT_PRICE_PER_M = 3.00
+OUTPUT_PRICE_PER_M = 15.00
+
+_tracker = {"input_tokens": 0, "output_tokens": 0, "calls": 0}
+
+
+def save_cost_report(path: Path) -> None:
+    inp = _tracker["input_tokens"]
+    out = _tracker["output_tokens"]
+    cost = (inp * INPUT_PRICE_PER_M + out * OUTPUT_PRICE_PER_M) / 1_000_000
+    report = {
+        "calls": _tracker["calls"],
+        "input_tokens": inp,
+        "output_tokens": out,
+        "total_tokens": inp + out,
+        "cost_usd": round(cost, 6),
+        "prices": {
+            "input_per_million_usd": INPUT_PRICE_PER_M,
+            "output_per_million_usd": OUTPUT_PRICE_PER_M,
+        },
+        "saved_at": datetime.now().isoformat(),
+    }
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
+    logger.info(f"Cost report saved: {path} | calls={_tracker['calls']} tokens={inp + out} cost=${cost:.4f}")
+
 
 class SonnetInference(BaseInference):
 
     def __init__(self, api_key: Optional[str] = None, model: str = "claude-haiku-4-5",
                  temperature: float = 0.1, max_tokens: int = 8192, max_retries: int = 3):
-
+        super().__init__()
         if api_key is None:
             api_key = os.getenv("SONNET_API_KEY")
 
@@ -90,6 +120,9 @@ class SonnetInference(BaseInference):
         return media_type
 
     def build_messages(self, prompt: str, image_paths=None, system_prompt: str = SYSTEM_PROMPT):
+        self._last_prompt_text = prompt
+        self._last_system_prompt = system_prompt or ""
+        self._last_image_paths = [str(p) for p in image_paths] if image_paths else []
 
         content = []
 
@@ -134,8 +167,14 @@ class SonnetInference(BaseInference):
                                                        temperature=self.temperature, max_tokens=self.max_tokens)
                 text = response.content[0].text.strip()
 
-                logger.info("Sonnet inference successful")
+                input_tokens = response.usage.input_tokens
+                output_tokens = response.usage.output_tokens
+                _tracker["input_tokens"] += input_tokens
+                _tracker["output_tokens"] += output_tokens
+                _tracker["calls"] += 1
 
+                logger.info(f"Sonnet inference successful | in={input_tokens} out={output_tokens} tokens")
+                self._save_llm_log(text, input_tokens=input_tokens, output_tokens=output_tokens)
                 return text
 
             except Exception as e:

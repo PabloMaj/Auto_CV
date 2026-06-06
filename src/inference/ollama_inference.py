@@ -47,6 +47,7 @@ class OllamaInference(BaseInference):
         max_retries: int = 3
     ):
 
+        super().__init__()
         self.model = model
 
         self.client = ollama.Client(
@@ -113,6 +114,9 @@ class OllamaInference(BaseInference):
         image_paths=None,
         system_prompt: str = SYSTEM_PROMPT
     ):
+        self._last_prompt_text = prompt
+        self._last_system_prompt = system_prompt or ""
+        self._last_image_paths = [str(p) for p in image_paths] if image_paths else []
 
         messages = []
 
@@ -302,7 +306,7 @@ class OllamaInference(BaseInference):
                 logger.info(
                     "Ollama inference successful"
                 )
-
+                self._save_llm_log(response_raw)
                 return response_raw
 
             except Exception as e:

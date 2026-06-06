@@ -23,12 +23,13 @@ class SAM3PromptOptimizer:
         task: str,  # "detect" | "segment"
         max_iters: int = 5,
         max_desc_words: int = 10,
+        log_dir=None,
     ):
         assert task in ("detect", "segment")
 
         self.task = task
         self.sam = SamSingleton(model_path=sam_model_path)
-        self.llm = OllamaVisionLLM(llm_model)
+        self.llm = OllamaVisionLLM(llm_model, log_dir=log_dir)
 
         self.metric = (
             DetectionAP50()

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, List
 
 from src.funcs.programmer_funcs.programmer_funcs import extract_source_code, select_images_for_prompt
@@ -40,9 +41,12 @@ class ProgrammerAgent:
         )
 
     def run(self, state, reasoning_type="initial_coding"):
+        stage_id = state.get("stage_id", 0)
+        step_id = state.get("step_id", 0)
+        print(f"Current stage_id and step_id: {stage_id}, {step_id}")
 
-        print(f"Current stage_id and step_id: "
-              f"{state.get('stage_id', 0)}, {state.get('step_id', 0)}")
+        repo_root = Path(__file__).resolve().parents[2]
+        self.llm.log_dir = repo_root / "workspace" / state.get("exp_id", "default") / "llm_logs" / "programmer" / f"stage_{stage_id}_step_{step_id}"
 
         logger.info(f"Running ProgrammerAgent ({reasoning_type})")
 

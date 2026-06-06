@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.utils.logger import get_logger
 
 from src.inference.factory import InferenceFactory
@@ -30,6 +32,9 @@ class ImprovementSuggesterAgent:
 
         stage_id = state.get("stage_id", 0)
         step_id = state.get("step_id", 0)
+
+        repo_root = Path(__file__).resolve().parents[2]
+        self.llm.log_dir = repo_root / "workspace" / state.get("exp_id", "default") / "llm_logs" / "improvement_suggester" / f"stage_{stage_id}_step_{step_id}"
         filtered = [
             a for a in state["eval_artifacts"]
             if a.step_key.startswith(f"stage_{stage_id}_")

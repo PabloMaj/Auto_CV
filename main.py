@@ -3,24 +3,10 @@ from datetime import datetime
 from pathlib import Path
 
 from src.graph.workflow import build_graph
+from src.inference.sonnet_inference import save_cost_report
 from src.state.agent_state import AgentState
 from src.config.settings import SystemSettings
-
-
-def _state_to_json(state: dict) -> dict:
-    from pydantic import BaseModel
-
-    def _convert(v):
-        if isinstance(v, BaseModel):
-            return _convert(v.model_dump())
-        if isinstance(v, Path):
-            return str(v)
-        if isinstance(v, dict):
-            return {k: _convert(val) for k, val in v.items()}
-        if isinstance(v, list):
-            return [_convert(i) for i in v]
-        return v
-    return {k: _convert(v) for k, v in state.items()}
+from src.utils.state_utils import state_to_json
 
 
 if __name__ == "__main__":
@@ -40,7 +26,12 @@ if __name__ == "__main__":
     exp_dir.mkdir(parents=True, exist_ok=True)
     state_path = exp_dir / "final_state.json"
     with open(state_path, "w", encoding="utf-8") as f:
-        json.dump(_state_to_json(result), f, indent=2, ensure_ascii=False)
+        json.dump(state_to_json(result), f, indent=2, ensure_ascii=False)
+
+    with open(exp_dir / "settings.json", "w", encoding="utf-8") as f:
+        json.dump(settings.model_dump(), f, indent=2, ensure_ascii=False)
+
+    save_cost_report(exp_dir / "cost_report.json")
 
     print("\n=== FINAL RESULT ===")
     print(result)

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.utils.logger import get_logger
 from src.funcs.data_analyser_funcs.data_analyser_funcs import determine_desired_output, build_desired_output_definition
 from src.inference.ollama_inference import OllamaInference
@@ -11,6 +13,8 @@ class DataAnalyserAgent:
         self.inference = inference
 
     def run(self, state):
+        repo_root = Path(__file__).resolve().parents[2]
+        self.inference.log_dir = repo_root / "workspace" / state.get("exp_id", "default") / "llm_logs" / "data_analyser"
 
         logger.info("Running DataAnalyserAgent")
 

@@ -41,7 +41,8 @@ class YOLOSAMLLMPseudoPipeline:
         random.seed(random_seed)
 
         self.prompt_optimizer = SAM3PromptOptimizer(sam_model_path=self.sam_model_path, llm_model=llm_model,
-                                                    task=task, max_iters=prompt_optimizer_max_iters, max_desc_words=10)
+                                                    task=task, max_iters=prompt_optimizer_max_iters, max_desc_words=10,
+                                                    log_dir=self.output_root / "llm_logs")
 
     def preprocess_labeled_dataset(self):
 
