@@ -27,11 +27,16 @@ class DatasetEnricherAgent:
         output_root = Path("workspace") / exp_id / "dataset_enrichment_pseudo" / dataset_group / dataset_name
 
         sam_max_iters = self.settings.sam_prompt_optimizer_max_iters if self.settings else 5
+        pseudo_threshold = self.settings.enricher_metric_threshold if self.settings else 0.0
+
+        repo_root = Path(__file__).resolve().parents[2]
+        sam_model_path = str(repo_root / "resources" / "sam3.pt")
 
         pipeline = YOLOSAMLLMPseudoPipeline(
             dataset_root=dataset_root, unlabeled_root=unlabeled_root, output_root=output_root,
             class_names=["object"], llm_model="gemma3:latest", task="detect", tile_size=640, overlap=0.5,
-            prompt_optimizer_max_iters=sam_max_iters,
+            sam_model_path=sam_model_path, prompt_optimizer_max_iters=sam_max_iters,
+            pseudo_label_metric_threshold=pseudo_threshold,
         )
         pipeline.run()
         del pipeline

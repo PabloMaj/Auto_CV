@@ -141,8 +141,8 @@ def _draw_predictions(img: np.ndarray, preds: list, output_type: str) -> np.ndar
         elif output_type == "bounding_boxes":
             bbox = pred.get("bbox") or pred.get("bounding_box")
             if bbox and len(bbox) == 4:
-                x, y, w, h = [int(v) for v in bbox]
-                cv2.rectangle(img, (x, y), (x + w, y + h), _PRED_COLOR, 2)
+                x1, y1, x2, y2 = [int(v) for v in bbox]
+                cv2.rectangle(img, (x1, y1), (x2, y2), _PRED_COLOR, 2)
 
         elif output_type in ("points", "midpoints"):
             pt = pred.get("point") or pred.get("midpoint")

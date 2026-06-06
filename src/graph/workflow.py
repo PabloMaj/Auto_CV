@@ -91,8 +91,8 @@ def build_graph(settings: SystemSettings):
     preprocessor = DataPreprocessorAgent()
     analyser = DataAnalyserAgent()
 
-    enricher = DatasetEnricherAgent(settings=settings)
-    trainer = DLModelTrainerAgent(settings=settings)
+    enricher = DatasetEnricherAgent(settings=settings) if settings.enable_dataset_enricher else None
+    trainer = DLModelTrainerAgent(settings=settings) if settings.enable_dl_model_trainer else None
 
     programmer = ProgrammerAgent(
         settings.programmer_llm.backend,
@@ -187,10 +187,9 @@ def build_graph(settings: SystemSettings):
     # ======================================================
 
     def route_after_runner(state):
-
         if state.get("runner_success") is False:
-            return "programmer"
-
+            if state.get("retry_count", 0) < settings.max_runner_retries:
+                return "programmer"
         return "evaluator"
 
     graph.add_conditional_edges(
@@ -203,7 +202,7 @@ def build_graph(settings: SystemSettings):
     )
 
     # ======================================================
-    # IMPROVEMENT LOOP (FIXED + CLEAN + BOUNDED)
+    # IMPROVEMENT LOOP
     # ======================================================
 
     def route_after_improvement(state):

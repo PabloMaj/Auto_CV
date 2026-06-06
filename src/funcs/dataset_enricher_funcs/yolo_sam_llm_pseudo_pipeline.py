@@ -22,7 +22,7 @@ class YOLOSAMLLMPseudoPipeline:
     def __init__(self, dataset_root: Path, unlabeled_root: Path, output_root: Path, class_names: List[str],
                  task: str = "detect", tile_size: int = 640, overlap: float = 0.5, sam_model_path: str = "resources/sam3.pt",
                  llm_model: str = "gemma3:latest", random_seed: int = 42, eval_dataset_root: Path = None,
-                 prompt_optimizer_max_iters: int = 5):
+                 prompt_optimizer_max_iters: int = 5, pseudo_label_metric_threshold: float = 0.0):
 
         self.dataset_root = Path(dataset_root)
         self.unlabeled_root = Path(unlabeled_root)
@@ -36,6 +36,7 @@ class YOLOSAMLLMPseudoPipeline:
         self.overlap = overlap
 
         self.sam_model_path = sam_model_path
+        self.pseudo_label_metric_threshold = pseudo_label_metric_threshold
 
         self.random_seed = random_seed
         random.seed(random_seed)
@@ -122,7 +123,7 @@ class YOLOSAMLLMPseudoPipeline:
         best = self.prompt_optimizer.optimize(train_images=train_images, train_yolo_labels=train_labels,
                                               val_images=val_images, val_yolo_labels=val_labels, workdir=workdir)
 
-        return best["desc"]
+        return best["desc"], best["AP50"]
 
     def sam_pseudo_label(self, tiled_unlabeled_dir: Path, prompt: str):
 
@@ -172,15 +173,13 @@ class YOLOSAMLLMPseudoPipeline:
         train_img = final_root / "images/train"
         train_lbl = final_root / "labels/train"
 
-        for img_path in tiled_unlabeled_dir.glob("*.*"):
-
-            lbl_path = pseudo_dir / f"{img_path.stem}.txt"
-
-            if not lbl_path.exists():
-                continue
-
-            shutil.copy(img_path, train_img / img_path.name)
-            shutil.copy(lbl_path, train_lbl / lbl_path.name)
+        if tiled_unlabeled_dir is not None and pseudo_dir is not None:
+            for img_path in tiled_unlabeled_dir.glob("*.*"):
+                lbl_path = pseudo_dir / f"{img_path.stem}.txt"
+                if not lbl_path.exists():
+                    continue
+                shutil.copy(img_path, train_img / img_path.name)
+                shutil.copy(lbl_path, train_lbl / lbl_path.name)
 
         with open(final_root / "data.yaml", "w") as f:
             yaml.dump(
@@ -207,16 +206,25 @@ class YOLOSAMLLMPseudoPipeline:
             eval_tiled_root = self.preprocess_eval_dataset()
 
         tiled_unlabeled = self.tile_unlabeled()
-        prompt = self.optimize_prompt(tiled_root=tiled_root, workdir=self.output_root / "prompt_opt",
-                                      eval_tiled_root=eval_tiled_root)
+        prompt, best_ap50 = self.optimize_prompt(tiled_root=tiled_root, workdir=self.output_root / "prompt_opt",
+                                                 eval_tiled_root=eval_tiled_root)
+
+        logger.info(f"SAM best AP50: {best_ap50:.4f}  (threshold: {self.pseudo_label_metric_threshold})")
 
         # release prompt_optimizer (holds SAM internally) before pseudo-labelling
         del self.prompt_optimizer
         self.prompt_optimizer = None
         cuda_cleanup()
 
-        pseudo_dir = self.sam_pseudo_label(tiled_unlabeled_dir=tiled_unlabeled, prompt=prompt)
-        final_dataset = self.build_dataset(tiled_root=tiled_root, tiled_unlabeled_dir=tiled_unlabeled, pseudo_dir=pseudo_dir)
+        if best_ap50 < self.pseudo_label_metric_threshold:
+            logger.warning(
+                f"SAM AP50 {best_ap50:.4f} below threshold {self.pseudo_label_metric_threshold} "
+                f"— skipping pseudo-labeling, unlabeled images will NOT be added to training set"
+            )
+            final_dataset = self.build_dataset(tiled_root=tiled_root, tiled_unlabeled_dir=None, pseudo_dir=None)
+        else:
+            pseudo_dir = self.sam_pseudo_label(tiled_unlabeled_dir=tiled_unlabeled, prompt=prompt)
+            final_dataset = self.build_dataset(tiled_root=tiled_root, tiled_unlabeled_dir=tiled_unlabeled, pseudo_dir=pseudo_dir)
 
         logger.info(f"DONE: {final_dataset}")
 
