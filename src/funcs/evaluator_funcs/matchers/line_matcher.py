@@ -28,12 +28,16 @@ class LineMatcher:
 
         return abs(np.cross(b - a, p - a)) / (np.linalg.norm(b - a) + 1e-9)
 
-    def _midpoint(self, line):
+    def _sample_points(self, line, n=4):
+        p1 = np.array(line[:2], dtype=np.float64)
+        p2 = np.array(line[2:], dtype=np.float64)
+        return [p1 + t * (p2 - p1) for t in np.linspace(0, 1, n)]
 
-        return np.array([
-            (line[0] + line[2]) / 2,
-            (line[1] + line[3]) / 2
-        ])
+    def _mean_lateral_distance(self, pred_line, gt_line):
+        points = self._sample_points(gt_line, n=4)
+        a = np.array(pred_line[:2], dtype=np.float64)
+        b = np.array(pred_line[2:], dtype=np.float64)
+        return float(np.mean([self._point_line_distance(p, a, b) for p in points]))
 
     def _overlap_ratio(self, l1, l2):
 
@@ -90,12 +94,8 @@ class LineMatcher:
                 if angle > self.angle_threshold:
                     continue
 
-                midpoint = self._midpoint(pred["line"])
-
-                lateral_distance = self._point_line_distance(
-                    midpoint,
-                    np.array(gt["line"][:2]),
-                    np.array(gt["line"][2:])
+                lateral_distance = self._mean_lateral_distance(
+                    pred["line"], gt["line"]
                 )
 
                 overlap = self._overlap_ratio(
@@ -104,6 +104,9 @@ class LineMatcher:
                 )
 
                 if overlap < self.overlap_threshold:
+                    continue
+
+                if lateral_distance > self.lateral_threshold:
                     continue
 
                 if lateral_distance < best_score:

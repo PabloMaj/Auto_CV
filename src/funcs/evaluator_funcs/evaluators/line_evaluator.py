@@ -21,7 +21,7 @@ class LineEvaluator(BaseEvaluator):
     # -----------------------------------------
     def match(self, predictions, ground_truths):
 
-        matcher = LineMatcher(lateral_threshold=25, angle_threshold=10, overlap_threshold=0.3)
+        matcher = LineMatcher(lateral_threshold=20, angle_threshold=2.5, overlap_threshold=0.5)
 
         return matcher.match(predictions=predictions, ground_truths=ground_truths)
 
