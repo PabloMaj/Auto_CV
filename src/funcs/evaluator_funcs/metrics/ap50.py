@@ -2,39 +2,35 @@ import numpy as np
 
 
 def compute_ap50(tp_all, fp_all, total_gt):
+    """
+    101-point interpolated AP@IoU=0.5.
 
-    pred_scores = []
-
-    for tp in tp_all:
-        pred_scores.append((tp["score"], 1))
-
-    for fp in fp_all:
-        pred_scores.append((fp["score"], 0))
-
-    pred_scores = sorted(
-        pred_scores,
-        key=lambda x: x[0],
-        reverse=True
+    Uses max-precision-to-the-right at each recall threshold so recall
+    regions that were never achieved contribute 0 (not the last precision value).
+    """
+    pred_scores = (
+        [(tp["score"], 1) for tp in tp_all]
+        + [(fp["score"], 0) for fp in fp_all]
     )
 
-    if len(pred_scores) == 0:
+    if not pred_scores or total_gt == 0:
         return 0.0
 
-    tp = np.array([x[1] for x in pred_scores])
-    fp = np.array([1 - x[1] for x in pred_scores])
+    pred_scores.sort(key=lambda x: x[0], reverse=True)
 
-    tp_cum = np.cumsum(tp)
-    fp_cum = np.cumsum(fp)
+    tp_arr = np.array([x[1] for x in pred_scores], dtype=float)
+    fp_arr = 1.0 - tp_arr
+
+    tp_cum = np.cumsum(tp_arr)
+    fp_cum = np.cumsum(fp_arr)
 
     precision = tp_cum / (tp_cum + fp_cum + 1e-9)
     recall = tp_cum / (total_gt + 1e-9)
 
-    recall_points = np.linspace(0, 1, 101)
+    # 101-point: at each threshold take max precision where recall >= threshold
+    ap = 0.0
+    for thr in np.linspace(0, 1, 101):
+        mask = recall >= thr
+        ap += float(np.max(precision[mask])) if mask.any() else 0.0
 
-    precision_interp = np.interp(
-        recall_points,
-        recall,
-        precision
-    )
-
-    return float(np.mean(precision_interp))
+    return ap / 101
