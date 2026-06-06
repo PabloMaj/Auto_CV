@@ -9,16 +9,9 @@ logger = get_logger(__name__)
 
 class RunnerAgent:
 
-    def __init__(self, timeout: int = 300, workspace_dir: str = "workspace"):
-
+    def __init__(self, timeout: int = 300):
         self.timeout = timeout
-        workspace_dir_path = Path(workspace_dir)
-
-        if not workspace_dir_path.is_absolute():
-            repo_root = Path(__file__).resolve().parents[2]
-            workspace_dir_path = repo_root / workspace_dir_path
-        self.workspace_dir = workspace_dir_path.resolve()
-        self.workspace_dir.mkdir(parents=True, exist_ok=True)
+        self.repo_root = Path(__file__).resolve().parents[2]
 
     def run(self, state):
 
@@ -31,8 +24,10 @@ class RunnerAgent:
             state["runner_error"] = ("Generated code is empty.")
             return state
 
+        exp_workspace = self.repo_root / "workspace" / state.get("exp_id", "default")
+
         # write code to file for execution
-        path_to_save_code = self.workspace_dir / f"stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}"
+        path_to_save_code = exp_workspace / f"stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}"
         path_to_save_code.mkdir(parents=True, exist_ok=True)
         code_path = (path_to_save_code / "generated_solution.py")
         code_path.write_text(generated_code, encoding="utf-8")
@@ -41,7 +36,7 @@ class RunnerAgent:
         try:
             cmd = ["python", str(code_path)]
 
-            result = subprocess.run(cmd, cwd=str(self.workspace_dir), capture_output=True,
+            result = subprocess.run(cmd, cwd=str(self.repo_root), capture_output=True,
                                     text=True, timeout=self.timeout)
 
             stdout = result.stdout or ""
@@ -63,6 +58,11 @@ class RunnerAgent:
         except Exception:
             state["runner_success"] = False
             state["runner_error"] = (traceback.format_exc())
+
+        if not state.get("runner_success"):
+            state["retry_count"] = state.get("retry_count", 0) + 1
+            state["total_retry_count"] = state.get("total_retry_count", 0) + 1
+            logger.info(f"Bug fix attempt #{state['retry_count']} (total: {state['total_retry_count']})")
 
         logger.info("RunnerAgent finished successfully")
 
