@@ -72,6 +72,7 @@ def update_after_improvement(state, settings: SystemSettings):
         **state,
         "step_id": step_id,
         "stage_id": stage_id,
+        "retry_count": 0,
     }
 
 
@@ -90,8 +91,8 @@ def build_graph(settings: SystemSettings):
     preprocessor = DataPreprocessorAgent()
     analyser = DataAnalyserAgent()
 
-    enricher = DatasetEnricherAgent()
-    trainer = DLModelTrainerAgent()
+    enricher = DatasetEnricherAgent(settings=settings)
+    trainer = DLModelTrainerAgent(settings=settings)
 
     programmer = ProgrammerAgent(
         settings.programmer_llm.backend,
