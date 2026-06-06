@@ -49,8 +49,8 @@ def _draw_predictions(img_bgr, predictions, output_type):
         elif output_type == "bounding_boxes":
             bbox = pred.get("bbox") or pred.get("bounding_box")
             if bbox and len(bbox) == 4:
-                x, y, w, h = [int(v) for v in bbox]
-                cv2.rectangle(vis, (x, y), (x + w, y + h), color, 2)
+                x1, y1, x2, y2 = [int(v) for v in bbox]
+                cv2.rectangle(vis, (x1, y1), (x2, y2), color, 2)
         elif output_type in ("points", "midpoints"):
             pt = pred.get("point") or pred.get("midpoint")
             if pt and len(pt) >= 2:
