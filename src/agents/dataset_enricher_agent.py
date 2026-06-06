@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from src.funcs.dataset_enricher_funcs.yolo_sam_llm_pseudo_pipeline import YOLOSAMLLMPseudoPipeline
+from src.utils.cuda import cuda_cleanup
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -8,10 +9,13 @@ logger = get_logger(__name__)
 
 class DatasetEnricherAgent:
 
+    def __init__(self, settings=None):
+        self.settings = settings
+
     def run(self, state):
         logger.info("Running DatasetEnricherAgent")
 
-        dataset_path = state.get("dataset_path")
+        dataset_path = state.get("dl_dataset_path")
 
         dataset_path_obj = Path(dataset_path)
         dataset_name = dataset_path_obj.name
@@ -19,11 +23,19 @@ class DatasetEnricherAgent:
 
         dataset_root = Path("data/data_structured") / dataset_group / dataset_name
         unlabeled_root = Path("data/data_structured") / dataset_group / dataset_name / "images" / "unlabelled"
-        output_root = Path("dataset_enrichment_pseudo") / dataset_group / dataset_name
+        exp_id = state.get("exp_id", "default")
+        output_root = Path("workspace") / exp_id / "dataset_enrichment_pseudo" / dataset_group / dataset_name
 
-        pipeline = YOLOSAMLLMPseudoPipeline(dataset_root=dataset_root, unlabeled_root=unlabeled_root, output_root=output_root,
-                                            class_names=["object"], llm_model="gemma3:latest", task="detect", tile_size=640, overlap=0.5)
+        sam_max_iters = self.settings.sam_prompt_optimizer_max_iters if self.settings else 5
+
+        pipeline = YOLOSAMLLMPseudoPipeline(
+            dataset_root=dataset_root, unlabeled_root=unlabeled_root, output_root=output_root,
+            class_names=["object"], llm_model="gemma3:latest", task="detect", tile_size=640, overlap=0.5,
+            prompt_optimizer_max_iters=sam_max_iters,
+        )
         pipeline.run()
+        del pipeline
+        cuda_cleanup("dataset_enricher")
 
         logger.info("Dataset enrichment completed")
 
