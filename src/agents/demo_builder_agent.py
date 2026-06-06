@@ -288,14 +288,15 @@ if __name__ == "__main__":
 
 class DemoBuilderAgent:
 
-    def __init__(self, workspace_dir: str = "workspace"):
-        p = Path(workspace_dir)
-        if not p.is_absolute():
-            p = Path(__file__).resolve().parents[2] / p
-        self.workspace_dir = p.resolve()
+    def __init__(self):
+        self.repo_root = Path(__file__).resolve().parents[2]
 
     def run(self, state):
         logger.info("Running DemoBuilderAgent")
+
+        exp_id = state.get("exp_id", "default")
+        self.workspace_dir = (self.repo_root / "workspace" / exp_id).resolve()
+        self.workspace_dir.mkdir(parents=True, exist_ok=True)
 
         user_prompt = state.get("user_prompt", "")
         desired_output = state.get("desired_output", "unknown")
