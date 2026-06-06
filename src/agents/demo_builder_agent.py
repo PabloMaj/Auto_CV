@@ -114,6 +114,8 @@ class DemoApp:
 
         self._predictor = Predictor()
         self._img_path: str = ""
+        self._orig_img_bgr = None
+        self._res_img_bgr  = None
 
         self._build_ui()
 
@@ -180,6 +182,11 @@ class DemoApp:
         self._orig_lbl  = self._make_image_panel(panels, "Original",          BLUE,  0)
         self._res_lbl   = self._make_image_panel(panels, "Prediction Result",  GREEN, 1)
 
+        self._orig_lbl.bind("<Button-1>", lambda e: self._open_zoom(self._orig_img_bgr))
+        self._res_lbl.bind("<Button-1>",  lambda e: self._open_zoom(self._res_img_bgr))
+        self._orig_lbl.config(cursor="hand2")
+        self._res_lbl.config(cursor="hand2")
+
         # ── log ───────────────────────────────────────────────────────
         log_frame = tk.Frame(self.root, bg=BG)
         log_frame.pack(fill=tk.X, padx=10, pady=(0, 8))
@@ -223,6 +230,8 @@ class DemoApp:
         if img is None:
             self._set_status("Cannot read image", RED)
             return
+        self._orig_img_bgr = img
+        self._res_img_bgr  = None
         _fit_to_label(img, self._orig_lbl)
         self._res_lbl.config(image="", text="—")
         self._run_btn.config(state="normal")
@@ -248,6 +257,7 @@ class DemoApp:
         threading.Thread(target=_task, daemon=True).start()
 
     def _on_done(self, vis_img, preds):
+        self._res_img_bgr = vis_img
         _fit_to_label(vis_img, self._res_lbl)
         self._set_status(f"Done — {len(preds)} detection(s)", GREEN)
         self._run_btn.config(state="normal")
@@ -263,6 +273,32 @@ class DemoApp:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _open_zoom(self, img_bgr):
+        if img_bgr is None:
+            return
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        max_w, max_h = int(sw * 0.9), int(sh * 0.9)
+
+        h, w = img_bgr.shape[:2]
+        scale = min(max_w / w, max_h / h, 1.0)
+        new_w, new_h = int(w * scale), int(h * scale)
+        resized = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+        photo = ImageTk.PhotoImage(Image.fromarray(rgb))
+
+        win = tk.Toplevel(self.root)
+        win.title("Zoom")
+        win.configure(bg=BG)
+        win.geometry(f"{new_w}x{new_h}")
+        win.resizable(False, False)
+        win.bind("<Escape>", lambda e: win.destroy())
+        win.bind("<Button-1>", lambda e: win.destroy())
+
+        lbl = tk.Label(win, image=photo, bg=BG, cursor="hand2")
+        lbl._photo = photo
+        lbl.pack()
 
     def _set_status(self, text, color=TEXT):
         self._status.config(text=text, fg=color)
