@@ -11,7 +11,9 @@ class EvalArtifact(BaseModel):
 
 class AgentState(BaseModel):
     user_prompt: str
-    dataset_path: str
+    dl_dataset_path: str
+    eval_dataset_path: Optional[str] = None
+    exp_id: str = ""
 
     train_samples: int = 0
     val_samples: int = 0
@@ -30,6 +32,7 @@ class AgentState(BaseModel):
     runner_success: Optional[bool] = None
     runner_output: Optional[str] = None
     runner_error: Optional[str] = None
+    total_retry_count: int = 0
 
     improvement_suggestions: List[str] = Field(default_factory=list)
 

@@ -15,6 +15,7 @@ class YOLOPipeline:
         processed_dataset: Path,
         yolo_train_artifacts_save_path: Path,
         class_names: list,
+        model_weights: str = "yolo11n.pt",
         pseudo_images_dir: Path = None,
         pseudo_labels_dir: Path = None,
     ):
@@ -22,6 +23,7 @@ class YOLOPipeline:
         self.processed_dataset = processed_dataset
         self.yolo_train_artifacts_save_path = yolo_train_artifacts_save_path
         self.class_names = class_names
+        self.model_weights = model_weights
         self.pseudo_images_dir = pseudo_images_dir
         self.pseudo_labels_dir = pseudo_labels_dir
 
@@ -100,7 +102,7 @@ class YOLOPipeline:
     def run_training(self, yaml_path: Path, epochs=20, batch=16):
 
         trainer = YOLOTrainer(
-            model_weights="yolov8m.pt",
+            model_weights=self.model_weights,
             data_yaml=str(yaml_path),
             output_dir=Path(self.yolo_train_artifacts_save_path)
         )

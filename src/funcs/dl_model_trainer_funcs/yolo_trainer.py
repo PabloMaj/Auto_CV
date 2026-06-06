@@ -11,7 +11,8 @@ class YOLOTrainer:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.model = YOLO(f"resources/{model_weights}")
+        resources_dir = Path(__file__).resolve().parents[3] / "resources"
+        self.model = YOLO(str(resources_dir / model_weights))
 
     def train(self, **train_kwargs):
         results = self.model.train(

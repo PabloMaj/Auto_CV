@@ -11,9 +11,8 @@ from src.funcs.dataset_enricher_funcs.sam_model import SamSingleton
 from src.funcs.dataset_enricher_funcs.sam_auto_labeler import SAM3AutoLabeler
 from src.funcs.dataset_enricher_funcs.prompt_optimizer import SAM3PromptOptimizer
 from src.funcs.dataset_enricher_funcs.loaders import load_images_and_labels
+from src.utils.cuda import cuda_cleanup
 from src.utils.logger import get_logger
-# from src.utils.cuda import cuda_cleanup
-
 
 logger = get_logger(__name__)
 
@@ -22,11 +21,13 @@ class YOLOSAMLLMPseudoPipeline:
 
     def __init__(self, dataset_root: Path, unlabeled_root: Path, output_root: Path, class_names: List[str],
                  task: str = "detect", tile_size: int = 640, overlap: float = 0.5, sam_model_path: str = "resources/sam3.pt",
-                 llm_model: str = "gemma3:latest", random_seed: int = 42):
+                 llm_model: str = "gemma3:latest", random_seed: int = 42, eval_dataset_root: Path = None,
+                 prompt_optimizer_max_iters: int = 5):
 
         self.dataset_root = Path(dataset_root)
         self.unlabeled_root = Path(unlabeled_root)
         self.output_root = Path(output_root)
+        self.eval_dataset_root = Path(eval_dataset_root) if eval_dataset_root else None
 
         self.class_names = class_names
         self.task = task
@@ -40,7 +41,7 @@ class YOLOSAMLLMPseudoPipeline:
         random.seed(random_seed)
 
         self.prompt_optimizer = SAM3PromptOptimizer(sam_model_path=self.sam_model_path, llm_model=llm_model,
-                                                    task=task, max_iters=5, max_desc_words=10)
+                                                    task=task, max_iters=prompt_optimizer_max_iters, max_desc_words=10)
 
     def preprocess_labeled_dataset(self):
 
@@ -49,6 +50,19 @@ class YOLOSAMLLMPseudoPipeline:
         out_root = self.output_root / "tiled_dataset"
 
         preprocessor = YOLOROIPreprocessor(input_root=self.dataset_root, output_root=out_root,
+                                           tile_size=self.tile_size, overlap=self.overlap)
+        preprocessor.generate()
+        preprocessor.create_yaml(self.class_names)
+
+        return out_root
+
+    def preprocess_eval_dataset(self):
+
+        logger.info("ROI preprocessing eval (bbox) dataset for prompt optimizer")
+
+        out_root = self.output_root / "tiled_eval_dataset"
+
+        preprocessor = YOLOROIPreprocessor(input_root=self.eval_dataset_root, output_root=out_root,
                                            tile_size=self.tile_size, overlap=self.overlap)
         preprocessor.generate()
         preprocessor.create_yaml(self.class_names)
@@ -95,12 +109,14 @@ class YOLOSAMLLMPseudoPipeline:
 
         return out_dir
 
-    def optimize_prompt(self, tiled_root: Path, workdir: Path,):
+    def optimize_prompt(self, tiled_root: Path, workdir: Path, eval_tiled_root: Path = None):
 
         logger.info("Optimizing SAM prompt (AP50 loop)")
 
-        train_images, train_labels = load_images_and_labels(tiled_root / "images/train", tiled_root / "labels/train")
-        val_images, val_labels = load_images_and_labels(tiled_root / "images/val", tiled_root / "labels/val")
+        label_root = eval_tiled_root if eval_tiled_root else tiled_root
+
+        train_images, train_labels = load_images_and_labels(tiled_root / "images/train", label_root / "labels/train")
+        val_images, val_labels = load_images_and_labels(tiled_root / "images/val", label_root / "labels/val")
 
         best = self.prompt_optimizer.optimize(train_images=train_images, train_yolo_labels=train_labels,
                                               val_images=val_images, val_yolo_labels=val_labels, workdir=workdir)
@@ -123,8 +139,9 @@ class YOLOSAMLLMPseudoPipeline:
         del labeler
         del sam
         SamSingleton._instance = None
+        SamSingleton._model = None
 
-        # cuda_cleanup()
+        cuda_cleanup()
 
         return out_dir
 
@@ -183,8 +200,20 @@ class YOLOSAMLLMPseudoPipeline:
         logger.info("START PIPELINE")
 
         tiled_root = self.preprocess_labeled_dataset()
+
+        eval_tiled_root = None
+        if self.eval_dataset_root:
+            eval_tiled_root = self.preprocess_eval_dataset()
+
         tiled_unlabeled = self.tile_unlabeled()
-        prompt = self.optimize_prompt(tiled_root=tiled_root, workdir=self.output_root / "prompt_opt")
+        prompt = self.optimize_prompt(tiled_root=tiled_root, workdir=self.output_root / "prompt_opt",
+                                      eval_tiled_root=eval_tiled_root)
+
+        # release prompt_optimizer (holds SAM internally) before pseudo-labelling
+        del self.prompt_optimizer
+        self.prompt_optimizer = None
+        cuda_cleanup()
+
         pseudo_dir = self.sam_pseudo_label(tiled_unlabeled_dir=tiled_unlabeled, prompt=prompt)
         final_dataset = self.build_dataset(tiled_root=tiled_root, tiled_unlabeled_dir=tiled_unlabeled, pseudo_dir=pseudo_dir)
 

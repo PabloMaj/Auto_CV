@@ -27,20 +27,22 @@ class SystemSettings(BaseModel):
     # FEATURES FLAGS
     # ======================================================
 
-    enable_dl_model_trainer: bool = False
-    enable_dataset_enricher: bool = False
+    enable_dl_model_trainer: bool = True
+    enable_dataset_enricher: bool = True
 
     enable_iterative_improvement: bool = True
     enable_novel_solution_search: bool = False
-    enable_label_free_improvement: bool = True
+    enable_label_free_improvement: bool = False
 
     # ======================================================
     # LIMITS / CONTROL
     # ======================================================
 
-    max_runner_retries: int = 5
-    max_improvement_steps: int = 10
-    max_novel_solutions: int = 2
+    max_runner_retries: int = 3
+    max_improvement_steps: int = 3
+    max_novel_solutions: int = 1
+    sam_prompt_optimizer_max_iters: int = 5
+    yolo_model_weights: str = "yolo11n.pt"
 
     # ======================================================
     # INITIAL STATE CONTRACT (IMPORTANT)
