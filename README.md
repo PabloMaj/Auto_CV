@@ -62,10 +62,24 @@ All behaviour is controlled through `SystemSettings` in `src/config/settings.py`
 
 ## Quick Start
 
-### Requirements
+### Environment setup
+
+Create and activate a virtual environment, then install dependencies:
+
+```bash
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+
+# Linux / macOS
+python -m venv .venv
+source .venv/bin/activate
+```
 
 ```bash
 pip install -r requirements.txt
+
+python -m spacy download en_core_web_sm
 ```
 
 Set the Anthropic API key:
