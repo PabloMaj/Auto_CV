@@ -39,9 +39,9 @@ class SystemSettings(BaseModel):
     # ======================================================
 
     max_runner_retries: int = 3
-    max_improvement_steps: int = 3
-    max_novel_solutions: int = 1
-    sam_prompt_optimizer_max_iters: int = 5
+    max_improvement_steps: int = 5
+    max_novel_solutions: int = 2
+    sam_prompt_optimizer_max_iters: int = 10
     yolo_model_weights: str = "yolo11n.pt"
     enricher_metric_threshold: float = 0.5
 
