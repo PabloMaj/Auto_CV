@@ -28,9 +28,10 @@ def sample_training_images(state, label_free: bool = False) -> list:
     Images are resized to 1/4 of original resolution and saved to
     workspace/stage_X_step_Y/_programmer_vis/ for use in the LLM prompt.
     """
-    split_paths = state.get("split_paths", {})
-    image_dir = Path(split_paths.get("train", {}).get("images", ""))
-    label_dir = Path(split_paths.get("train", {}).get("labels", ""))
+    # Use eval_split_paths so annotations match the task output (midpoints/lines/etc.)
+    eval_split_paths = state.get("eval_split_paths", state.get("split_paths", {}))
+    image_dir = Path(eval_split_paths.get("train", {}).get("images", ""))
+    label_dir = Path(eval_split_paths.get("train", {}).get("labels", ""))
     desired_out = state.get("desired_output", "unknown")
     stage_id = state.get("stage_id", 0)
     step_id = state.get("step_id", 0)
