@@ -29,6 +29,12 @@ OUTPUT_PRICE_PER_M = 15.00
 _tracker = {"input_tokens": 0, "output_tokens": 0, "calls": 0}
 
 
+def reset_cost_tracker() -> None:
+    _tracker["input_tokens"] = 0
+    _tracker["output_tokens"] = 0
+    _tracker["calls"] = 0
+
+
 def save_cost_report(path: Path) -> None:
     inp = _tracker["input_tokens"]
     out = _tracker["output_tokens"]
