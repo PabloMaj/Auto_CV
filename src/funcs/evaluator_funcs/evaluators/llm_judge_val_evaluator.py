@@ -41,8 +41,9 @@ class LLMJudgeValEvaluator:
             logger.warning(f"Val image dir not found: {image_dir}")
             return state
 
-        vis_dir = Path(f"workspace/stage_{stage_id}_step_{step_id}/evaluation/visualizations/val")
-        metrics_dir = Path(f"workspace/stage_{stage_id}_step_{step_id}/evaluation/metrics/val")
+        exp_workspace = Path("workspace") / state.get("exp_id", "default")
+        vis_dir = exp_workspace / f"stage_{stage_id}_step_{step_id}/evaluation/visualizations/val"
+        metrics_dir = exp_workspace / f"stage_{stage_id}_step_{step_id}/evaluation/metrics/val"
         vis_dir.mkdir(parents=True, exist_ok=True)
         metrics_dir.mkdir(parents=True, exist_ok=True)
 

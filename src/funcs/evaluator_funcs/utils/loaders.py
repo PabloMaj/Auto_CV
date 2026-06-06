@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import importlib.util
 import traceback
@@ -117,17 +116,17 @@ def load_yolo_lines(labels_dir, img_stem, img_shape=None):
 def load_predictor(state):
     stage_id = state.get("stage_id")
     step_id = state.get("step_id")
+    exp_id = state.get("exp_id", "default")
 
-    PREDICTOR_TEMPLATE = r"C:\projects\agent_cv\workspace\stage_{stage_id}_step_{step_id}\generated_solution.py"
+    repo_root = Path(__file__).resolve().parents[4]
+    path = repo_root / "workspace" / exp_id / f"stage_{stage_id}_step_{step_id}" / "generated_solution.py"
 
-    path = PREDICTOR_TEMPLATE.format(stage_id=stage_id, step_id=step_id)
-
-    if not os.path.exists(path):
+    if not path.exists():
         logger.error(f"Missing predictor: {path}")
         return None
 
     try:
-        spec = importlib.util.spec_from_file_location("generated_solution", path)
+        spec = importlib.util.spec_from_file_location("generated_solution", str(path))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 

@@ -61,8 +61,9 @@ class BaseEvaluator(ABC):
     # -------------------------------------------------
     def _evaluate_split(self, predictor, state, split):
 
-        image_dir = Path(state["split_paths"][split]["images"])
-        label_dir = Path(state["split_paths"][split]["labels"])
+        eval_split_paths = state.get("eval_split_paths") or state["split_paths"]
+        image_dir = Path(eval_split_paths[split]["images"])
+        label_dir = Path(eval_split_paths[split]["labels"])
 
         image_files = [p for p in image_dir.iterdir() if p.is_file()]
 
@@ -164,9 +165,7 @@ class BaseEvaluator(ABC):
         # Save under a separate filename so val_metrics.json stays as LLM-judge score
         stage_id = state.get("stage_id", 0)
         step_id = state.get("step_id", 0)
-        metrics_dir = Path(
-            f"workspace/stage_{stage_id}_step_{step_id}/evaluation/metrics/val"
-        )
+        metrics_dir = Path("workspace") / state.get("exp_id", "default") / f"stage_{stage_id}_step_{step_id}/evaluation/metrics/val"
         metrics_dir.mkdir(parents=True, exist_ok=True)
         with open(metrics_dir / "val_gt_metrics.json", "w") as f:
             json.dump(result["metrics"], f, indent=2)
@@ -213,10 +212,8 @@ class BaseEvaluator(ABC):
     # -------------------------------------------------
     def _create_visualizations(self, image_files, tp_all, fp_all, fn_all, state, split):
 
-        vis_dir = Path(
-            f"workspace/"
-            f"stage_{state.get('stage_id', 0)}"
-            f"_step_{state.get('step_id', 0)}"
+        vis_dir = Path("workspace") / state.get("exp_id", "default") / (
+            f"stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}"
             f"/evaluation/visualizations/{split}"
         )
 
@@ -244,10 +241,8 @@ class BaseEvaluator(ABC):
     # -------------------------------------------------
     def _save_metrics(self, state, split, metrics):
 
-        metrics_dir = Path(
-            f"workspace/"
-            f"stage_{state.get('stage_id', 0)}"
-            f"_step_{state.get('step_id', 0)}"
+        metrics_dir = Path("workspace") / state.get("exp_id", "default") / (
+            f"stage_{state.get('stage_id', 0)}_step_{state.get('step_id', 0)}"
             f"/evaluation/metrics/{split}"
         )
 
