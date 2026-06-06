@@ -34,6 +34,12 @@ DATASETS = [
     "sunflower_3_riviere_2017_1",
 ]
 
+_SCENE_CONTEXT = (
+    "Crops are arranged in parallel rows with approximately equal and constant spacing between them. "
+    "The spacing between adjacent rows is approximately uniform across the entire image. "
+    "The centers of individual plants lie approximately on straight crop row lines."
+)
+
 VARIANTS = {
     "bboxes": {
         "eval_suffix": "bboxes",
@@ -52,7 +58,13 @@ VARIANTS = {
     "lines": {
         "eval_suffix": "lines",
         "user_prompt": (
-            "Develop a computer vision method to detect crops in given RGB images. "
+            "Develop a computer vision method to detect crop row lines in given RGB images. "
+            f"{_SCENE_CONTEXT} "
+            "Each detected line segment should approximately start and end at the outermost plants of the crop row "
+            "and should span most of the image. "
+            "Return exactly one line segment per crop row — do not split a single row into multiple short segments, "
+            "as short fragments belonging to the same row will be counted as false positives. "
+            "For example, if two crop rows are visible in the image, return exactly two line segments. "
             "You can use a DL model as support for the solution. Return line segments."
         ),
     },
@@ -106,7 +118,7 @@ if __name__ == "__main__":
         (dataset, variant_name, variant_cfg)
         for dataset in DATASETS
         for variant_name, variant_cfg in VARIANTS.items()
-    ][:2]  # TEMP: limit to 2 runs for testing
+    ]
 
     print(f"Experiment 01 — {len(runs)} runs total")
     print(f"Datasets : {DATASETS}")
