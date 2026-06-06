@@ -9,16 +9,22 @@ class DataPreprocessorAgent:
     def run(self, state):
         logger.info("Running DataPreprocessorAgent")
 
-        dataset_path = state.get("dataset_path")
+        dl_dataset_path = state.get("dl_dataset_path")
 
-        if not dataset_path:
-            raise ValueError("dataset_path is missing")
+        if not dl_dataset_path:
+            raise ValueError("dl_dataset_path is missing")
 
         # =========================
         # PATHS
         # =========================
-        split_paths = get_split_paths(dataset_path)
+        split_paths = get_split_paths(dl_dataset_path)
         state["split_paths"] = split_paths
+
+        eval_dataset_path = state.get("eval_dataset_path")
+        if eval_dataset_path:
+            state["eval_split_paths"] = get_split_paths(eval_dataset_path)
+        else:
+            state["eval_split_paths"] = split_paths
 
         # =========================
         # IMAGE COUNTS
@@ -35,7 +41,7 @@ class DataPreprocessorAgent:
         # =========================
         # VIS PATH
         # =========================
-        state["vis_path"] = str(get_vis_path(dataset_path))
+        state["vis_path"] = str(get_vis_path(dl_dataset_path))
 
         # =========================
         # FLATTENED STATS
