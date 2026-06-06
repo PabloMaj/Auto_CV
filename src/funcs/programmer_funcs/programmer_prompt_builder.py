@@ -1,6 +1,6 @@
 # src/agents/funcs/programmer_prompt_builder.py
 
-from src.prompts.programmer_prompts.base import BASE_PROGRAMMER_PROMPT
+from src.prompts.programmer_prompts.base import BASE_PROGRAMMER_PROMPT, DL_MODEL_SECTION
 from src.prompts.programmer_prompts.initial_coding import INITIAL_CODING_PROMPT
 from src.prompts.programmer_prompts.bug_fixing import BUG_FIXING_PROMPT
 from src.prompts.programmer_prompts.improving_based_on_suggestion import IMPROVING_BASED_ON_SUGGESTION_PROMPT
@@ -22,12 +22,15 @@ class ProgrammerPromptBuilder:
     def build(cls, state, reasoning_type, code_start_token, code_end_token,
               label_free: bool = False):
 
+        model_path = state.get("yolo_model_path", "")
+        dl_section = DL_MODEL_SECTION.format(model_path=model_path) if model_path else ""
+
         base_prompt = BASE_PROGRAMMER_PROMPT.format(
             user_prompt=state["user_prompt"],
             desired_output_specification=state["desired_output_definition"],
             code_start_token=code_start_token,
             code_end_token=code_end_token,
-            model_path=state.get("yolo_model_path", "")
+            dl_model_section=dl_section,
         )
 
         if reasoning_type == ProgrammerReasoningType.INITIAL_CODING:

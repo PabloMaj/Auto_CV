@@ -45,7 +45,7 @@ def sample_training_images(state, label_free: bool = False) -> list:
 
     sampled = random.sample(image_files, min(_MAX_IMAGES, len(image_files)))
 
-    out_dir = Path(f"workspace/stage_{stage_id}_step_{step_id}/_programmer_vis")
+    out_dir = Path("workspace") / state.get("exp_id", "default") / f"stage_{stage_id}_step_{step_id}/_programmer_vis"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     paths = []

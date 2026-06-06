@@ -31,7 +31,9 @@ if __name__ == "__main__":
 - Prefer robust and readable implementations.
 - Handle edge cases.
 - Avoid unnecessary complexity.
+{dl_model_section}"""
 
+DL_MODEL_SECTION = """
 DEEP LEARNING MODEL AVAILABILITY:
 - A trained deep learning object detection model may be available and can be used if it is beneficial for solving the task.
 - If the deep learning model is used, it can be loaded from the following path:
@@ -44,8 +46,8 @@ DEEP LEARNING MODEL AVAILABILITY:
     predictor = YOLOPredictor(model_path=MODEL_PATH, tile_size=640, overlap=0.5, conf=0.25)
     boxes = predictor.predict(image)
 
-- When using the deep learning model through the example predictor shown above, the returned `boxes` variable already 
-  follows the desired output format and can be used directly in the solution.
+- When using the deep learning model through the example predictor shown above, the returned `boxes` variable already
+ follows the desired output format and can be used directly in the solution.
 - Usage of the deep learning model is OPTIONAL.
 - The solution may use either:
     - the provided deep learning model,
