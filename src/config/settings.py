@@ -43,7 +43,7 @@ class SystemSettings(BaseModel):
     max_novel_solutions: int = 2
     sam_prompt_optimizer_max_iters: int = 10
     yolo_model_weights: str = "yolo11n.pt"
-    enricher_metric_threshold: float = 0.5
+    enricher_metric_threshold: float = 0.4
 
     # ======================================================
     # INITIAL STATE CONTRACT (IMPORTANT)

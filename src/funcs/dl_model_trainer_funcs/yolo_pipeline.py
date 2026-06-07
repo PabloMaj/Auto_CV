@@ -99,7 +99,7 @@ class YOLOPipeline:
         return yaml_path
 
     # -----------------------------
-    def run_training(self, yaml_path: Path, epochs=20, batch=16):
+    def run_training(self, yaml_path: Path, epochs=40, batch=16):
 
         trainer = YOLOTrainer(
             model_weights=self.model_weights,

@@ -27,12 +27,16 @@ from src.utils.state_utils import state_to_json
 
 DATA_ROOT = "data/data_structured/crop_line_uav"
 
+"""
 DATASETS = [
     "maize_3_nerac_2016_1",
     "sugarbeet_3_charmont_2017_1",
     "sunflower_1_auzeville_2019_1",
     "sunflower_3_riviere_2017_1",
 ]
+"""
+
+DATASETS = ["sugarbeet_3_charmont_2017_1"]
 
 _SCENE_CONTEXT = (
     "Crops are arranged in parallel rows with approximately equal and constant spacing between them. "
@@ -65,6 +69,12 @@ VARIANTS = {
             "Return exactly one line segment per crop row — do not split a single row into multiple short segments, "
             "as short fragments belonging to the same row will be counted as false positives. "
             "For example, if two crop rows are visible in the image, return exactly two line segments. "
+            "The majority of detected crops should contribute to the returned lines — "
+            "only a small number of detections may represent non-crop objects and not belong to any line. "
+            "Note that significant gaps between plants within a row may occur; the method should be robust to missing plants "
+            "and must not split a row into separate segments just because of a gap. "
+            "All detected line segments should have approximately the same orientation. "
+            "Estimating this dominant orientation from the data can be an explicit step in the processing pipeline. "
             "You can use a DL model as support for the solution. Return line segments."
         ),
     },
@@ -118,6 +128,7 @@ if __name__ == "__main__":
         (dataset, variant_name, variant_cfg)
         for dataset in DATASETS
         for variant_name, variant_cfg in VARIANTS.items()
+        if variant_name == "lines"  # --- RUN ONLY LINES FOR NOW ---
     ]
 
     print(f"Experiment 01 — {len(runs)} runs total")
