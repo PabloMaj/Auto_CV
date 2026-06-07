@@ -210,6 +210,10 @@ def build_graph(settings: SystemSettings):
         if state.get("stage_id", 0) > settings.max_novel_solutions:
             return "demo_builder"
 
+        artifacts = state.get("eval_artifacts", [])
+        if artifacts and artifacts[-1].value >= 1.0:
+            return "demo_builder"
+
         return "programmer"
 
     graph.add_edge("evaluator", "improvement_suggester")
