@@ -70,6 +70,22 @@ class YOLOPredictor:
         return keep
 
     # -----------------------------
+    # ownership zone filter
+    # -----------------------------
+    def _ownership_zone(self, tile_x1, tile_y1, tile_x2, tile_y2, img_w, img_h):
+        """
+        Each tile owns predictions whose midpoint falls in its central strip.
+        Edge tiles extend their zone to the image boundary so the full image
+        is covered without gaps.
+        """
+        margin = self.overlap / 2 * self.tile_size
+        zx1 = 0 if tile_x1 == 0 else tile_x1 + margin
+        zx2 = img_w if tile_x2 >= img_w else tile_x1 + self.tile_size - margin
+        zy1 = 0 if tile_y1 == 0 else tile_y1 + margin
+        zy2 = img_h if tile_y2 >= img_h else tile_y1 + self.tile_size - margin
+        return zx1, zy1, zx2, zy2
+
+    # -----------------------------
     # sliding window inference
     # -----------------------------
     def predict(self, image: np.ndarray):
@@ -101,24 +117,23 @@ class YOLOPredictor:
                 confs = r.boxes.conf.cpu().numpy()
                 clss = r.boxes.cls.cpu().numpy()
 
-                tile_boxes = []
+                zx1, zy1, zx2, zy2 = self._ownership_zone(x1, y1, x2, y2, w, h)
+
                 for i in range(len(boxes)):
-                    x1b, y1b, x2b, y2b = boxes[i]
-                    tile_boxes.append([
-                        x1b, y1b, x2b, y2b,
-                        float(confs[i]),
-                        int(clss[i])
-                    ])
-
-                shifted = self.xyxy_shift(tile_boxes, x1, y1)
-                all_boxes.extend(shifted)
-
-        final_boxes = self.nms(all_boxes, iou_thr=0.5)
+                    bx1, by1, bx2, by2 = boxes[i]
+                    mx = (bx1 + bx2) / 2 + x1
+                    my = (by1 + by2) / 2 + y1
+                    if zx1 <= mx < zx2 and zy1 <= my < zy2:
+                        all_boxes.append([
+                            bx1 + x1, by1 + y1, bx2 + x1, by2 + y1,
+                            float(confs[i]),
+                            int(clss[i])
+                        ])
 
         output = []
-        for x1, y1, x2, y2, conf, cls in final_boxes:
+        for bx1, by1, bx2, by2, conf, cls in all_boxes:
             output.append({
-                "bbox": [x1, y1, x2, y2],
+                "bbox": [bx1, by1, bx2, by2],
                 "label": self.model.names[int(cls)],
                 "confidence": conf
             })
