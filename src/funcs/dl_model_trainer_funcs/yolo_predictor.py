@@ -130,8 +130,10 @@ class YOLOPredictor:
                             int(clss[i])
                         ])
 
+        final_boxes = self.nms(all_boxes, iou_thr=0.75)
+
         output = []
-        for bx1, by1, bx2, by2, conf, cls in all_boxes:
+        for bx1, by1, bx2, by2, conf, cls in final_boxes:
             output.append({
                 "bbox": [bx1, by1, bx2, by2],
                 "label": self.model.names[int(cls)],
