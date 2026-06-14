@@ -27,7 +27,7 @@ The Programmer–Runner–Evaluator–ImprovementSuggester loop repeats for up t
 | **DLModelTrainerAgent** | Fine-tunes a YOLO model on the (enriched) dataset. *(optional)* | YOLO11 / YOLOv8 |
 | **ProgrammerAgent** | Generates or refines a `Predictor` class in Python. Supports four reasoning modes: `initial_coding`, `bug_fixing`, `improving_based_on_suggestion`, `novelty_coding`. | Claude Sonnet 4.5 |
 | **RunnerAgent** | Executes the generated script in an isolated workspace directory; captures stdout / stderr and return code. | — |
-| **EvaluatorAgent** | Computes task-specific metrics (LINE\_F1, AP50, point distance) against ground-truth labels on val and test splits. In **label-free mode**, replaces val evaluation with an LLM-as-judge that scores prediction images directly. | — · Claude Sonnet 4.5 *(label-free)* |
+| **EvaluatorAgent** | Computes task-specific metrics (LINE\_F1, AP50, point distance) against ground-truth labels on val and test splits. In **label-free mode**, replaces val evaluation with an LLM-as-judge that scores prediction images directly. | — · Claude Opus 4.8 *(label-free judge)* |
 | **ImprovementSuggesterAgent** | Analyses evaluation visualisations and source code; produces structured `VERIFIED_PROBLEMS` and `IMPROVEMENT_SUGGESTIONS` fed back to the Programmer. | Claude Sonnet 4.5 |
 | **DemoBuilderAgent** | Selects the best-scoring solution from the workspace (by `val_metrics.json`), wraps it in a Tkinter GUI application, and packages it as a standalone `demo_app.exe` via PyInstaller. | — |
 
@@ -53,10 +53,19 @@ All behaviour is controlled through `SystemSettings` in `src/config/settings.py`
 | `enable_dataset_enricher` | `False` | Run pseudo-labelling on unlabelled data |
 | `enable_dl_model_trainer` | `False` | Fine-tune a YOLO model before coding |
 | `enable_novel_solution_search` | `False` | Generate architecturally distinct solutions across stages |
-| `enable_label_free_improvement` | `False` | Replace val evaluation with LLM-as-judge |
-| `max_runner_retries` | `5` | Maximum bug-fixing iterations per execution failure |
-| `max_improvement_steps` | `3` | Maximum improvement steps per stage |
+| `enable_label_free_improvement` | `True` | Replace val evaluation with LLM-as-judge |
+| `max_runner_retries` | `3` | Maximum bug-fixing iterations per execution failure |
+| `max_improvement_steps` | `5` | Maximum improvement steps per stage |
 | `max_novel_solutions` | `2` | Number of independent solution stages |
+
+### Models
+
+| Setting | Model | Role |
+|---|---|---|
+| `programmer_llm` | Claude Sonnet 4.5 | Code generation and bug fixing |
+| `improvement_llm` | Claude Sonnet 4.5 | Improvement suggestions |
+| `judge_llm` | Claude Opus 4.8 | LLM-as-judge val scoring (label-free mode only) |
+| `vision_llm` | Qwen 2.5-VL 7B | Dataset visual analysis (local, via Ollama) |
 
 ---
 
@@ -112,7 +121,8 @@ settings = SystemSettings(
 
 initial_state = AgentState(
     user_prompt="Detect crop row lines in UAV RGB images using classical CV.",
-    dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_lines",
+    dl_dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_bboxes",
+    eval_dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_lines",
 )
 ```
 

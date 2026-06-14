@@ -27,16 +27,12 @@ from src.utils.state_utils import state_to_json
 
 DATA_ROOT = "data/data_structured/crop_line_uav"
 
-"""
 DATASETS = [
     "maize_3_nerac_2016_1",
     "sugarbeet_3_charmont_2017_1",
     "sunflower_1_auzeville_2019_1",
     "sunflower_3_riviere_2017_1",
 ]
-"""
-
-DATASETS = ["sugarbeet_3_charmont_2017_1"]
 
 _SCENE_CONTEXT = (
     "Crops are arranged in parallel rows with approximately equal and constant spacing between them. "
@@ -128,7 +124,7 @@ if __name__ == "__main__":
         (dataset, variant_name, variant_cfg)
         for dataset in DATASETS
         for variant_name, variant_cfg in VARIANTS.items()
-        if variant_name == "lines"  # --- RUN ONLY LINES FOR NOW ---
+        if variant_name in ["bboxes", "midpoints", "lines"]
     ]
 
     print(f"Experiment 01 — {len(runs)} runs total")
