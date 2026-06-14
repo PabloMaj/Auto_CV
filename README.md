@@ -6,14 +6,32 @@ AgentCV is a multi-agent framework for iterative, automated development of compu
 
 ## Pipeline Overview
 
-```
-DataPreprocessor → DataAnalyser → [DatasetEnricher*] → [DLModelTrainer*]
-    → Programmer → Runner → Evaluator → ImprovementSuggester → [loop]
-                                                              → DemoBuilder
+```mermaid
+flowchart TD
+    Start([Start]) --> Pre[DataPreprocessor]
+    Pre --> Ana[DataAnalyser]
+    Ana --> Enc{Enricher\nenabled?}
+    Enc -- yes --> DE[DatasetEnricher]
+    Enc -- no --> DLT
+    DE --> DLT{DL Trainer\nenabled?}
+    DLT -- yes --> TR[DLModelTrainer]
+    DLT -- no --> Prog
+    TR --> Prog[Programmer]
+
+    Prog --> Run[Runner]
+    Run -- "fail · retry" --> Prog
+    Run -- success --> Eval["Evaluator\n(GT labels · or · LLM judge)"]
+    Eval -- "score ≥ 1.0\nor max steps reached" --> Demo[DemoBuilder]
+    Eval -- "needs improvement" --> Sug[ImprovementSuggester]
+    Sug --> Prog
+    Demo --> End([End])
+
+    style DE fill:#f5f5f5,stroke:#aaa
+    style TR fill:#f5f5f5,stroke:#aaa
 ```
 
-`*` optional stages controlled by feature flags.  
-The Programmer–Runner–Evaluator–ImprovementSuggester loop repeats for up to `max_improvement_steps` steps per stage and `max_novel_solutions` stages.
+Optional stages (`DatasetEnricher`, `DLModelTrainer`) are controlled by feature flags.  
+The Programmer → Runner → Evaluator → ImprovementSuggester loop repeats for up to `max_improvement_steps` steps per stage and `max_novel_solutions` stages.
 
 ---
 
