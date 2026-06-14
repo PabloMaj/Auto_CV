@@ -60,7 +60,7 @@ def save_cost_report(path: Path) -> None:
 class SonnetInference(BaseInference):
 
     def __init__(self, api_key: Optional[str] = None, model: str = "claude-haiku-4-5",
-                 temperature: float = 0.1, max_tokens: int = 8192, max_retries: int = 3):
+                 temperature: Optional[float] = 0.1, max_tokens: int = 8192, max_retries: int = 3):
         super().__init__()
         if api_key is None:
             api_key = os.getenv("SONNET_API_KEY")
@@ -169,8 +169,15 @@ class SonnetInference(BaseInference):
 
                 logger.info(f"Sonnet inference attempt {attempt + 1}")
 
-                response = self.client.messages.create(model=self.model, system=messages["system"], messages=messages["messages"],
-                                                       temperature=self.temperature, max_tokens=self.max_tokens)
+                call_kwargs = dict(
+                    model=self.model,
+                    system=messages["system"],
+                    messages=messages["messages"],
+                    max_tokens=self.max_tokens,
+                )
+                if self.temperature is not None:
+                    call_kwargs["temperature"] = self.temperature
+                response = self.client.messages.create(**call_kwargs)
                 text = response.content[0].text.strip()
 
                 input_tokens = response.usage.input_tokens
