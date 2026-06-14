@@ -15,9 +15,9 @@ class EvaluatorAgent:
 
         if settings and settings.enable_label_free_improvement:
             llm = InferenceFactory.create(
-                backend=settings.improvement_llm.backend,
-                model=settings.improvement_llm.model,
-                **settings.improvement_llm.inference_kwargs,
+                backend=settings.judge_llm.backend,
+                model=settings.judge_llm.model,
+                **settings.judge_llm.inference_kwargs,
             )
             self.llm_judge = LLMJudgeValEvaluator(llm)
             logger.info("EvaluatorAgent: label-free mode enabled (LLM judge for val)")

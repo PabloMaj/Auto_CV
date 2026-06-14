@@ -1,34 +1,30 @@
 LLM_JUDGE_SYSTEM_PROMPT = """
 You are a Computer Vision evaluation expert.
-You assess the quality of computer vision model predictions by visually inspecting images.
-
 Respond ONLY with valid JSON — no markdown, no explanation outside the JSON block.
 """
 
 LLM_JUDGE_USER_TEMPLATE = """
-COMPUTER VISION TASK:
-{user_prompt}
-
+TASK: {user_prompt}
 OUTPUT TYPE: {output_type}
 
-The attached image shows model predictions drawn in CYAN.
+CYAN predictions on the {n_images} attached image(s).
 
-Score the predictions on a scale 0.0–1.0. Be STRICT — default to a LOW score unless
-predictions are clearly correct. Use this anchoring:
+F1 score measures detection quality by balancing two aspects:
+  — recall:    how many real {output_type} are covered by a CYAN prediction
+  — precision: how many CYAN predictions land on a real {output_type}
+F1 is low if either aspect is poor; F1 is high only when both are good.
 
-  1.0 — every real object detected, zero spurious predictions
-  0.7 — most real objects detected, a few FP (spurious predictions)
-  0.5 — roughly half correct, noticeable FP or FN
-  0.3 — many FP or most real objects missed
-  0.0 — completely wrong or nothing detected
+Evaluate across all provided images together and return a single score.
 
-FALSE POSITIVES ARE HEAVILY PENALISED: each prediction that does not correspond to a
-real object in the scene should pull the score down significantly.
-Count spurious predictions explicitly before scoring.
+Estimate:
+  recall:       fraction of real {output_type} with a CYAN prediction (0–1)
+  precision:    fraction of CYAN predictions on a real {output_type} (0–1)
+  metric_value: the F1 score (0 = worst, 1 = perfect)
 
-Return ONLY this JSON (no other text):
+Return ONLY:
 {{
-  "metric_value": <float 0.0 to 1.0>,
-  "reasoning": "<one sentence: N correct, M spurious, K missed>"
+  "recall": <float>,
+  "precision": <float>,
+  "metric_value": <float>
 }}
 """

@@ -51,7 +51,7 @@ class LLMJudgeValEvaluator:
 
         image_files = sorted([p for p in image_dir.iterdir() if p.is_file()])[:_MAX_JUDGE_IMAGES]
 
-        scores = []
+        vis_images = []
         vis_paths = []
 
         for img_path in image_files:
@@ -70,16 +70,14 @@ class LLMJudgeValEvaluator:
             out = vis_dir / f"{img_path.stem}_eval.jpg"
             cv2.imwrite(str(out), vis)
             vis_paths.append(str(out))
+            vis_images.append(vis)
 
-            score = self._query_judge(vis, img_path, user_prompt, desired_out)
-            scores.append(score)
-
-        mean_score = float(np.mean(scores)) if scores else 0.0
+        mean_score = self._query_judge(vis_images, vis_paths, user_prompt, desired_out) if vis_images else 0.0
 
         metrics = {
             "metric_name": "LLM_JUDGE_SCORE",
             "metric_value": mean_score,
-            "num_evaluated": len(scores),
+            "num_evaluated": len(vis_images),
             "status": "success",
         }
 
@@ -99,20 +97,25 @@ class LLMJudgeValEvaluator:
             EvalArtifact(step_key=step_key, value=mean_score, img_paths=vis_paths)
         )
 
-        logger.info(f"LLM judge val score: {mean_score:.4f} ({len(scores)} images)")
+        logger.info(f"LLM judge val score: {mean_score:.4f} ({len(vis_images)} images)")
         return state
 
-    def _query_judge(self, image: np.ndarray, img_path: Path,
+    def _query_judge(self, images: list, vis_paths: list,
                      user_prompt: str, output_type: str) -> float:
-        tmp = Path(img_path).parent / f"_judge_tmp_{Path(img_path).stem}.jpg"
-        cv2.imwrite(str(tmp), image)
+        tmp_paths = []
+        for i, img in enumerate(images):
+            tmp = Path(vis_paths[i]).parent / f"_judge_tmp_{i}.jpg"
+            cv2.imwrite(str(tmp), img)
+            tmp_paths.append(tmp)
         try:
             prompt = LLM_JUDGE_USER_TEMPLATE.format(
-                user_prompt=user_prompt, output_type=output_type
+                user_prompt=user_prompt,
+                output_type=output_type,
+                n_images=len(images),
             )
             messages = self.llm.build_messages(
                 prompt=prompt,
-                image_paths=[str(tmp)],
+                image_paths=[str(p) for p in tmp_paths],
                 system_prompt=LLM_JUDGE_SYSTEM_PROMPT,
             )
             raw = self.llm.infer(messages=messages)
@@ -122,8 +125,9 @@ class LLMJudgeValEvaluator:
             logger.warning(f"LLM judge query failed: {exc}")
             return 0.0
         finally:
-            if tmp.exists():
-                tmp.unlink()
+            for tmp in tmp_paths:
+                if tmp.exists():
+                    tmp.unlink()
 
 
 # ---------------------------------------------------------------------------

@@ -27,12 +27,12 @@ class SystemSettings(BaseModel):
     # FEATURES FLAGS
     # ======================================================
 
-    enable_dl_model_trainer: bool = True
-    enable_dataset_enricher: bool = True
+    enable_dl_model_trainer: bool = False
+    enable_dataset_enricher: bool = False
 
     enable_iterative_improvement: bool = True
     enable_novel_solution_search: bool = False
-    enable_label_free_improvement: bool = False
+    enable_label_free_improvement: bool = True
 
     # ======================================================
     # LIMITS / CONTROL
@@ -103,6 +103,20 @@ class SystemSettings(BaseModel):
         inference_kwargs={
             "temperature": 0.2,
             "max_tokens": 4096,
+            "max_retries": 3,
+        }
+    )
+
+    # ======================================================
+    # LLM JUDGE MODEL (OPUS - label-free val scoring)
+    # ======================================================
+
+    judge_llm: LLMSettings = LLMSettings(
+        backend="sonnet",
+        model="claude-opus-4-8",
+        inference_kwargs={
+            "temperature": None,
+            "max_tokens": 512,
             "max_retries": 3,
         }
     )
