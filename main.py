@@ -1,3 +1,6 @@
+# from src.config.langsmith_integration import setup_langsmith_tracing
+# setup_langsmith_tracing()
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -8,12 +11,12 @@ from src.state.agent_state import AgentState
 from src.config.settings import SystemSettings
 from src.utils.state_utils import state_to_json
 
-
 if __name__ == "__main__":
+
     settings = SystemSettings()
 
     initial_state = AgentState(
-        user_prompt="Develop a computer vison method to detect crops in given RGB images. You can use DL model as support for solution. Return midpoints.",
+        user_prompt="Develop a computer vison method to detect crops in given RGB images. Return midpoints.",
         dl_dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_bboxes",
         eval_dataset_path="data/data_structured/crop_line_uav/sugarbeet_3_charmont_2017_1_midpoints",
         exp_id=datetime.now().strftime("%Y%m%d_%H%M%S"),
