@@ -45,14 +45,14 @@ VARIANTS = {
         "eval_suffix": "bboxes",
         "user_prompt": (
             "Develop a computer vision method to detect crops in given RGB images. "
-            "You can use a DL model as support for the solution. Return bounding boxes."
+            "You can use only classical computer vision techniques for the solution. Return bounding boxes."
         ),
     },
     "midpoints": {
         "eval_suffix": "midpoints",
         "user_prompt": (
             "Develop a computer vision method to detect crops in given RGB images. "
-            "You can use a DL model as support for the solution. Return midpoints."
+            "You can use only classical computer vision techniques for the solution. Return midpoints."
         ),
     },
     "lines": {
@@ -65,13 +65,20 @@ VARIANTS = {
             "Return exactly one line segment per crop row — do not split a single row into multiple short segments, "
             "as short fragments belonging to the same row will be counted as false positives. "
             "For example, if two crop rows are visible in the image, return exactly two line segments. "
-            "The majority of detected crops should contribute to the returned lines — "
-            "only a small number of detections may represent non-crop objects and not belong to any line. "
+            "Not all detected objects need to belong to a crop row — some detections may represent weeds or noise. "
+            "The algorithm should distinguish between crop row plants and outlier detections. "
+            "A minimum number of plants should be required to form a valid crop row (e.g. at least 4–5 aligned detections); "
+            "clusters with fewer detections should be discarded rather than returned as a line. "
+            "Prefer long line segments: a line supported by many inlier plants is more reliable than a short one. "
             "Note that significant gaps between plants within a row may occur; the method should be robust to missing plants "
             "and must not split a row into separate segments just because of a gap. "
             "All detected line segments should have approximately the same orientation. "
             "Estimating this dominant orientation from the data can be an explicit step in the processing pipeline. "
-            "You can use a DL model as support for the solution. Return line segments."
+            "The maximum allowed angular deviation of any returned line segment from the dominant crop row orientation is 10 degrees. "
+            "Line segments that deviate by more than 10 degrees from the dominant orientation are considered incorrect detections "
+            "and will be penalised in the metric as false positives. "
+            "You can use only classical computer vision techniques for the solution. "
+            "Return line segments."
         ),
     },
 }
